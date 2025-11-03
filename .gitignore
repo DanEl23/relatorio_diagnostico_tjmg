@@ -1,0 +1,60 @@
+# ----------------------------------------------------------------------
+# 1. AMBIENTES VIRTUAIS & DEPENDÊNCIAS (Python)
+# ----------------------------------------------------------------------
+# Pasta do ambiente virtual venv/
+venv/
+.venv/
+env/
+.env/
+
+# Arquivos de lock e cache do Poetry
+poetry.lock
+.cache
+
+# ----------------------------------------------------------------------
+# 2. CACHE & COMPILADOS (Python)
+# ----------------------------------------------------------------------
+# Arquivos de byte-code compilados
+__pycache__/
+*.pyc
+
+# Arquivos de build (distribuição)
+build/
+dist/
+*.egg-info/
+
+# ----------------------------------------------------------------------
+# 3. VARIÁVEIS DE AMBIENTE (Segredos)
+# ----------------------------------------------------------------------
+# NUNCA ENVIAR segredos (senhas, chaves de API)
+.env
+.env.*
+!.env.example  # Permite enviar o modelo (o guia)
+
+# ----------------------------------------------------------------------
+# 4. FERRAMENTAS & IDEs (Ignorar configurações locais)
+# ----------------------------------------------------------------------
+# VS Code (Configurações pessoais da IDE)
+.vscode/
+
+# PyCharm/IntelliJ (Configurações da IDE)
+.idea/
+
+# Jupyter/IPython (Notebooks de teste)
+.ipynb_checkpoints
+
+# Logs e arquivos de debug
+*.log
+*.sqlite3
+
+# ----------------------------------------------------------------------
+# 5. CACHES ESPECÍFICOS (Cloud Shell, SO, etc.)
+# ----------------------------------------------------------------------
+# Pastas de cache do sistema/ferramentas que geraram o erro de 98MB
+.cache/
+
+# Arquivos temporários do macOS
+.DS_Store
+
+# Arquivos temporários do Windows
+Thumbs.db
