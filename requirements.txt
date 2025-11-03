@@ -1,0 +1,11 @@
+# Bibliotecas essenciais para manipulação de dados e I/O
+pandas
+openpyxl
+
+# Bibliotecas para geração de gráficos estatísticos
+matplotlib
+
+# Bibliotecas para automação e templating do documento Word
+python-docx
+docxtpl
+jinja2
