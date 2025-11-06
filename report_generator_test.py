@@ -68,7 +68,17 @@ dados_tabela_atos = [
     ("Resolução nº 1086/2024", "Altera a Resolução do Órgão Especial nº 1.010, de 29 de agosto de 2020, que \"Dispõe sobre a implementação, a estrutura e o funcionamento dos \"Núcleos de Justiça 4.0\" e dá outras providências\", e altera a Resolução do Órgão Especial nº 1.053, de 20 de setembro de 2023, que \"Dispõe sobre a Superintendência Judiciária e dá outras providências\".")
 ]
 
+
+MAPA_IMAGENS = {
+    # Chave: O texto exato da legenda (incluindo o ponto final, se houver)
+    "Figura 01 - Informações sobre o Estado de Minas Gerais.": "canvas_images/figura_01.png",
+    
+    # Adicione aqui os outros gráficos (Exemplos)
+    # "Gráfico 01 - Execução Orçamentária 2024 - Despesa Paga por Grupo": "resources/grafico_01.png",
+    # "Gráfico 02 - Execução Orçamentária 2024 - Despesa Paga por Categoria": "resources/grafico_02.png"
+}
 # --- 3. FUNÇÕES AUXILIARES (PAGINAÇÃO, ALINHAMENTO, XML) ---
+
 
 def add_page_number(footer):
     """ Adiciona o código de campo de paginação (PAGE) a um rodapé (footer). """
@@ -89,6 +99,7 @@ def add_page_number(footer):
     run_end = p.add_run()
     run_end.element.append(fldChar_end)
 
+
 def set_cell_vertical_alignment(cell, align):
     """Define o alinhamento vertical de uma célula usando w:vAlign (XML)."""
     tc = cell._tc
@@ -96,6 +107,7 @@ def set_cell_vertical_alignment(cell, align):
     vAlign = OxmlElement('w:vAlign')
     vAlign.set(qn('w:val'), align) 
     tcPr.append(vAlign)
+
 
 def limpar_espacamento_lista(paragraph):
     """ Remove o espaçamento extra de um parágrafo de lista usando XML. """
@@ -117,7 +129,10 @@ def limpar_espacamento_lista(paragraph):
 # --- 4. FUNÇÕES DE PROCESSAMENTO E CRIAÇÃO ---
 
 def extrair_sumario_para_json(caminho_arquivo_docx, pattern_regex):
-    """Lê o DOCX modelo (Sumário) e extrai títulos numerados."""
+    """
+    Lê o DOCX modelo (Sumário) e extrai títulos numerados.
+    (Versão revertida para gerar chaves limpas, sem ponto final).
+    """
     try:
         documento_sumario = Document(caminho_arquivo_docx)
     except Exception as e:
@@ -140,20 +155,25 @@ def extrair_sumario_para_json(caminho_arquivo_docx, pattern_regex):
             prefixo_completo = match.group(1).strip()
             texto_titulo = match.group(2).strip()
             level = len(prefixo_completo.split('.'))
+
+            # --- CORREÇÃO: Revertido para a chave limpa ---
             texto_final_com_numero = f"{prefixo_completo} {texto_titulo}"
+            # --- FIM DA CORREÇÃO ---
 
             if level >= 1:
                 estrutura_do_relatorio.append({
                     "tipo": "TITULO",
                     "level": level,
-                    "texto": texto_final_com_numero
+                    "texto": texto_final_com_numero # Chave: "3 PERFIL INSTITUCIONAL"
                 })
+    
     return estrutura_do_relatorio
 
 
 def extrair_conteudo_mapeado(caminho_arquivo_docx, pattern_titulo, pattern_legenda):
     """
     Lê o documento DOCX de conteúdo, mapeia parágrafos e identifica marcadores.
+    (Versão corrigida para usar 'legenda_completa')
     """
     print(f"Iniciando extração de conteúdo de: {caminho_arquivo_docx}")
     
@@ -185,6 +205,8 @@ def extrair_conteudo_mapeado(caminho_arquivo_docx, pattern_titulo, pattern_legen
         elif chave_titulo_atual:
             # 2. NÃO é um TÍTULO. É um conteúdo.
             
+            # --- LÓGICA DE DETECÇÃO DE MARCADORES ---
+            
             if texto == "[INSERIR_TABELA_ATOS_NORMATIVOS]":
                 # 2A. É O GATILHO DA TABELA
                 conteudo_mapeado[chave_titulo_atual].append({
@@ -193,12 +215,12 @@ def extrair_conteudo_mapeado(caminho_arquivo_docx, pattern_titulo, pattern_legen
                 })
                 
             elif re.search(pattern_legenda, texto, re.IGNORECASE):
-                # 2B. É UMA FIGURA/GRÁFICO
+                # 2B. É UMA FIGURA/GRÁFICO (CORREÇÃO APLICADA AQUI)
                 conteudo_mapeado[chave_titulo_atual].append({
                     "tipo": "FIGURA",
-                    "legenda": texto,
-                    "caminho_imagem": "placeholders/figura_xx.png" 
+                    "legenda_completa": texto # <-- Gera a chave correta
                 })
+                
             else:
                 # 2C. É um PARÁGRAFO comum.
                 conteudo_mapeado[chave_titulo_atual].append({
@@ -217,18 +239,23 @@ def customizar_estilos_titulo(documento):
     style_h1 = documento.styles['Heading 1']
     font_h1 = style_h1.font
     font_h1.name = 'Calibri' 
-    font_h1.size = Pt(20) 
+    font_h1.size = Pt(18) 
     font_h1.color.rgb = RGBColor(162, 22, 18) 
     font_h1.all_caps = True 
     font_h1.bold = True
+    p_format_h1 = style_h1.paragraph_format
+    # p_format_h1.left_indent = Inches(0.25)
+    p_format_h1.space_after = Pt(12)
     
     style_h2 = documento.styles['Heading 2']
     font_h2 = style_h2.font
     font_h2.name = 'Calibri' 
-    font_h2.size = Pt(17)
+    font_h2.size = Pt(16)
     font_h2.color.rgb = RGBColor(162, 22, 18) 
     font_h2.bold = True
     font_h2.all_caps = False
+    p_format_h2 = style_h2.paragraph_format
+    p_format_h2.space_after = Pt(10)
     
     style_h3 = documento.styles['Heading 3']
     font_h3 = style_h3.font
@@ -236,6 +263,8 @@ def customizar_estilos_titulo(documento):
     font_h3.size = Pt(15.5)
     font_h3.color.rgb = RGBColor(162, 22, 18) 
     font_h3.bold = True
+    p_format_h3 = style_h3.paragraph_format
+    p_format_h3.space_after = Pt(8)
 
     # --- Estilo "Normal" (Corpo do Texto) ---
     style_normal = documento.styles['Normal']
@@ -417,7 +446,7 @@ if __name__ == "__main__":
     # --- FIM DA CAPA ---
 
     # --- INÍCIO DA SEÇÃO: SUMÁRIO (Simplificado) ---
-    document.add_heading('Sumário \n', level=1) 
+    document.add_heading('Sumário', level=1) 
     print("Criando sumário estático...")
 
     for elemento in estrutura_final:
@@ -449,8 +478,18 @@ if __name__ == "__main__":
 
     for elemento in estrutura_final:
         if elemento['tipo'] == 'TITULO':
-            document.add_heading(elemento['texto']+'\n', level=elemento['level'])
+        
+            # --- INÍCIO DA CORREÇÃO DE IMPRESSÃO H1 ---
+            texto_chave = elemento['texto'] # Ex: "3 PERFIL INSTITUCIONAL"
+            level = elemento['level']
             
+            if level == 1:
+                # Substitui o primeiro espaço por ". " (Adiciona o ponto)
+                texto_para_imprimir = texto_chave.replace(" ", ". ", 1)
+            else:
+                texto_para_imprimir = texto_chave # Ex: "3.1 Principais Atos..."
+                
+            document.add_heading(texto_para_imprimir, level=level)
             titulo_chave = elemento['texto']
             if titulo_chave in conteudo_mapeado:
                 
@@ -466,17 +505,60 @@ if __name__ == "__main__":
                         p_format.space_after = Pt(8) 
                     
                     elif bloco['tipo'] == 'FIGURA':
-                        print(f"--- Encontrado marcador de FIGURA: {bloco['legenda']}")
-                        document.add_paragraph(f"[PLACEHOLDER DE IMAGEM AQUI: {bloco['caminho_imagem']}]")
-                        document.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        legenda_completa = bloco['legenda_completa']
                         
-                        p_legenda = document.add_paragraph(bloco['legenda'])
+                        # Tenta dividir a legenda no "Fonte:"
+                        # Isso torna o sistema robusto
+                        partes = legenda_completa.split("Fonte:")
+                        legenda_chave = partes[0].strip() # Ex: "Figura 01 - Informações..."
+                        
+                        if len(partes) > 1:
+                            texto_fonte = f"Fonte: {partes[1].strip()}"
+                        else:
+                            texto_fonte = ""
+
+                        print(f"--- Processando FIGURA: {legenda_chave}")
+                        
+                        # Tenta encontrar o caminho da imagem no MAPA
+                        if legenda_chave in MAPA_IMAGENS:
+                            caminho_imagem_relativo = MAPA_IMAGENS[legenda_chave]
+                            caminho_imagem_abs = os.path.join(SCRIPT_DIR, caminho_imagem_relativo)
+                            
+                            try:
+                                # INSERE A IMAGEM REAL
+                                # Ajuste a largura (width) conforme necessário
+                                document.add_picture(caminho_imagem_abs, width=Cm(16.5)) 
+                                document.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                                
+                            except FileNotFoundError:
+                                print(f"!!! AVISO: Imagem não encontrada em: {caminho_imagem_abs}")
+                                document.add_paragraph(f"[ERRO: IMAGEM NÃO ENCONTRADA: {caminho_imagem_relativo}]")
+                            except Exception as e:
+                                print(f"!!! ERRO ao inserir imagem: {e}")
+
+                        else:
+                            # Se a legenda não estiver no MAPA
+                            print(f"!!! AVISO: Legenda '{legenda_chave}' não encontrada no MAPA_IMAGENS.")
+                            document.add_paragraph(f"[ERRO: MAPEAMENTO DE IMAGEM AUSENTE PARA: {legenda_chave}]")
+
+                        # Adiciona a Legenda (Chave)
+                        p_legenda = document.add_paragraph()
+                        run_legenda = p_legenda.add_run(legenda_chave)
+                        run_legenda.font.name = 'Calibri'
+                        run_legenda.font.size = Pt(8) # Tamanho 10 para legendas (sugestão)
+                        run_legenda.bold = False
                         p_legenda.alignment = WD_ALIGN_PARAGRAPH.LEFT 
                         p_legenda.paragraph_format.space_before = Pt(6) 
-                        p_legenda.paragraph_format.space_after = Pt(12) 
-                        run_legenda = p_legenda.runs[0]
-                        run_legenda.font.name = 'Calibri'
-                        run_legenda.font.size = Pt(8)
+                        p_legenda.paragraph_format.space_after = Pt(0) # Compacto
+
+                        # Adiciona a Fonte (se existir)
+                        if texto_fonte:
+                            p_fonte = document.add_paragraph()
+                            run_fonte = p_fonte.add_run(texto_fonte)
+                            run_fonte.font.name = 'Calibri'
+                            run_fonte.font.size = Pt(9) # Tamanho 9 para fontes (sugestão)
+                            p_fonte.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                            p_fonte.paragraph_format.space_after = Pt(12)
 
                     elif bloco['tipo'] == 'TABELA_ATOS':
                         print(f"--- Inserindo Tabela de Atos Normativos (Estilizada) para {titulo_chave} ---")
