@@ -231,7 +231,7 @@ dados_tabela_nucleos = [
     ("DATA_MERGED", "CEMES - Central de Execução de Medidas de Segurança 4.0")
 ]
 
-dados_tabela_historicos = [
+dados_tabela_processos = [
     # Tipo, Col 1, Col 2, Col 3, Col 4, Col 5, Col 6, Col 7
     ("HEADER_MERGE", "PROCESSOS DISTRIBUÍDOS", "", "", "", "", "", ""),
     ("SUB_HEADER", "Instância", "2020", "2021", "2022", "2023", "2024", "Média"),
@@ -240,6 +240,77 @@ dados_tabela_historicos = [
     ("DATA_ROW", "Turma Recursal", "56.088", "84.268", "84.215", "93.299", "103.728", "84.320"),
     ("DATA_ROW", "2º Grau", "199.457", "222.614", "227.760", "271.256", "334.528", "251.123"),
     ("TOTAL_ROW", "Total", "1.981.548", "2.209.603", "2.436.298", "2.697.391", "2.775.298", "2.420.028")
+]
+
+dados_tabela_julgamentos = [
+    # Tipo, Col 1, Col 2, Col 3, Col 4, Col 5, Col 6, Col 7
+    ("HEADER_MERGE", "JULGAMENTOS", "", "", "", "", "", ""),
+    ("SUB_HEADER", "Instância", "2020", "2021", "2022", "2023", "2024", "Média"),
+    ("DATA_ROW", "Justiça Comum", "878.705", "1.015.223", "1.185.589", "1.320.950", "1.412.397", "1.162.573"),
+    ("DATA_ROW", "Juizado Especial", "460.286", "636.208", "810.834", "932.469", "920.189", "751.997"),
+    ("DATA_ROW", "Turma Recursal", "878.705", "67.797", "77.926", "105.764", "117.904", "249.619"),
+    ("DATA_ROW", "2º Grau", "52.746", "225.454", "236.418", "275.286", "337.993", "225.579"),
+    ("TOTAL_ROW", "Total", "2.270.442", "1.944.682", "2.310.767", "2.634.469", "2.788.483", "2.389.769")
+]
+
+dados_tabela_acervo = [
+    # Tipo, Col 1, Col 2, Col 3, Col 4, Col 5, Col 6, Col 7
+    ("HEADER_MERGE", "ACERVO DE FEITOS ATIVOS NO ÚLTIMO DIA DO ANO", "", "", "", "", "", ""),
+    ("SUB_HEADER", "Instância", "2020", "2021", "2022", "2023", "2024", "Média"),
+    ("DATA_ROW", "Justiça Comum", "4.255.163", "4.152.223", "4.233.968", "4.140.228", "4.042.435", "4.164.803"),
+    ("DATA_ROW", "Juizado Especial", "1.125.405", "1.125.081", "1.053.185", "963.386", "922.153", "1.037.842"),
+    ("DATA_ROW", "Turma Recursal", "41.272", "67.940", "69.541", "76.573", "87.801", "68.625"),
+    ("DATA_ROW", "2º Grau", "224.715", "232.448", "224.156", "220.826", "206.944", "221.818"),
+    ("TOTAL_ROW", "Total", "5.646.555", "5.577.692", "5.580.850", "5.401.013", "5.259.333", "5.493.089")
+]
+
+# report_data.py (Versão Atualizada)
+
+# --- 9. DADOS TABELA 09 (ORÇAMENTO) ---
+TITULO_TABELA_ORCAMENTO = "Unidade Orçamentária 1031 – TJMG | Despesa Realizada por Ação Orçamentária – 2024"
+
+dados_tabela_orcamento = [
+    # A linha HEADER_MERGE foi removida daqui!
+    ("SUB_HEADER", "AÇÃO ORÇAMENTÁRIA", "DESPESA REALIZADA 2024 (R$)", "", "", "", "", ""),
+    ("DATA_ROW", "7004 - Precatórios e Sentenças Judiciárias", "-", "", "", "", "", ""),
+    ("DATA_ROW", "7006 - Proventos de Inativos Civis e Pensionistas", "2.535.040.959,40", "", "", "", "", ""),
+    ("DATA_ROW", "2053 - Remuneração de Magistrados da Ativa E Encargos Sociais", "1.353.944.848,00", "", "", "", "", ""),
+    ("DATA_ROW", "2054 - Remuneração de Servidores da Ativa e Encargos Sociais", "5.448.469.921,18", "", "", "", "", ""),
+    ("TOTAL_ROW", "TOTAL", "9.337.455.728,58", "", "", "", "", "")
+]
+
+TITULO_TABELA_ORCAMENTO_ACAO = "Unidade Orçamentária 4031 – FEPJ | Despesa Realizada por Ação Orçamentária – 2024"
+
+dados_tabela_orcamento_acao = [
+    # Tipo, Col 1, Col 2, Col 3, Col 4, Col 5, Col 6, Col 7
+    ("SUB_HEADER", "AÇÃO ORÇAMENTÁRIA", "DESPESA REALIZADA 2024 (R$)", "", "", "", "", ""),
+    ("DATA_ROW", "2025 - Gestão de Serviços De TIC", "192.893.477,53", "", "", "", "", ""),
+    ("DATA_ROW", "2055 - Auxílios Concedidos a Magistrados e Servidores", "158.320.267,00", "", "", "", "", ""),
+    ("DATA_ROW", "2091 - Obras e Gestão Predial", "520.565.747,04", "", "", "", "", ""),
+    ("DATA_ROW", "2109 - Formação, Aperfeiçoamento e Desenvolvimento Contínuo De Pessoas", "4.421.386,45", "", "", "", "", ""),
+    ("DATA_ROW", "4395 - Processamento Judiciário", "1.398.500.019,48", "", "", "", "", ""),
+    ("TOTAL_ROW", "TOTAL", "2.274.700.897,50", "", "", "", "", "")
+]
+
+dados_tabela_orcamento_2025 = [
+    # Título do Grupo 1 (UO 1031)
+    ("GROUP_TITLE", "UO 1031 – TJMG", ""), 
+    ("SUB_HEADER", "Ação Orçamentária", "Ação Orçamentária"),
+    ("DATA_ROW", "7004 - Precatórios e Sentenças Judiciais", "7004 - Precatórios e Sentenças Judiciais"),
+    ("DATA_ROW", "7006 - Proventos de Inativos Civis e Pensionistas", "7006 - Proventos de Inativos Civis e Pensionistas"),
+    ("DATA_ROW", "2053 - Remuneração de Magistrados da Ativa", "2053 - Remuneração de Magistrados da Ativa"),
+    ("DATA_ROW", "2054 - Remuneração de Servidores da Ativa", "2054 - Remuneração de Servidores da Ativa"),
+    ("TOTAL_ROW", "VALOR TOTAL – UO 1031", "VALOR TOTAL – UO 1031"), # Fim do primeiro bloco
+    
+    # Título do Grupo 2 (UO 4031) - Começa na linha seguinte
+    ("GROUP_TITLE", "UO 4031 – FEPJ", ""), 
+    ("SUB_HEADER", "Ação Orçamentária", "Ação Orçamentária"),
+    ("DATA_ROW", "2025 - Gestão de Serviços De TIC", "2025 - Gestão de Serviços De TIC"),
+    ("DATA_ROW", "2055 - Auxílios Concedidos a Magistrados", "2055 - Auxílios Concedidos a Magistrados"),
+    ("DATA_ROW", "2091 - Obras e Gestão Predial", "2091 - Obras e Gestão Predial"),
+    ("DATA_ROW", "2109 - Formação, Aperfeiçoamento e Desenvolvimento Contínuo De Pessoas", "2109 - Formação, Aperfeiçoamento e Desenvolvimento Contínuo De Pessoas"),
+    ("DATA_ROW", "4395 - Processamento Judiciário", "4395 - Processamento Judiciário"),
+    ("TOTAL_ROW", "VALOR TOTAL – UO 4031", "VALOR TOTAL – UO 4031"),
 ]
 
 # --- MAPA DE RECURSOS DE IMAGEM ---
@@ -252,7 +323,10 @@ MAPA_IMAGENS = {
     "Figura 03 - Novas estruturas na área fim.": "canvas_images/figura_03.png",
     "Figura 04 - Força de Trabalho.": "canvas_images/figura_04.png",
     "Figura 05 - Colaboradores da Justiça.": "canvas_images/figura_05.png",
-    "Figura 06 – Força de Trabalho e Colaboradores na área de TI.": "canvas_images/figura_06.png"
+    "Figura 06 – Força de Trabalho e Colaboradores na área de TI.": "canvas_images/figura_06.png",
+    "Figura 07 - Instalações prediais do TJMG.":"canvas_images/figura_07.png",
+    "Figura 08 - Desempenho da ação por programa (Unidade 1031).":"canvas_images/figura_08.png",
+    "Figura 09 - Desempenho da ação por programa (Unidade 4031).":"canvas_images/figura_09.png"
     # Adicionar outras figuras/gráficos aqui
     # "Gráfico 01 - ...": "resources/grafico_01.png",
 }

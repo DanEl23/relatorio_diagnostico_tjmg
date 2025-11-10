@@ -10,7 +10,7 @@ from docx.oxml.ns import qn
 
 # --- 1. IMPORTAÇÃO DOS DADOS EXTERNOS ---
 try:
-    from report_data import dados_tabela_atos, dados_tabela_areas, dados_tabela_estrutura, dados_tabela_comarcas, dados_tabela_nucleos, dados_tabela_historicos, MAPA_IMAGENS
+    from report_data import dados_tabela_atos, dados_tabela_areas, dados_tabela_estrutura, dados_tabela_comarcas, dados_tabela_nucleos, dados_tabela_processos, dados_tabela_julgamentos, dados_tabela_acervo, dados_tabela_orcamento, TITULO_TABELA_ORCAMENTO, dados_tabela_orcamento_acao, TITULO_TABELA_ORCAMENTO_ACAO, dados_tabela_orcamento_2025, MAPA_IMAGENS
 except ImportError:
     print("!!! ERRO CRÍTICO: Não foi possível encontrar o arquivo 'report_data.py'.")
     print("!!! Certifique-se de que 'report_data.py' está no mesmo diretório.")
@@ -36,6 +36,21 @@ def configurar_margens(documento, superior_cm, esquerda_cm, direita_cm, inferior
     section.bottom_margin = Cm(inferior_cm)
     
     print(f"Margens definidas: Superior={superior_cm}cm, Esquerda={esquerda_cm}cm.")
+
+
+def set_row_height_at_least(row, height_twips):
+    """ Define a altura MÍNIMA da linha usando XML (twips), permitindo expansão. """
+    tr = row._tr
+    trPr = tr.get_or_add_trPr()
+    
+    trHeight = OxmlElement('w:trHeight')
+    trHeight.set(qn('w:val'), str(height_twips))
+    trHeight.set(qn('w:hRule'), 'atLeast') # Define a regra como "At Least"
+    
+    for existing_trHeight in trPr.findall(qn('w:trHeight')):
+        trPr.remove(existing_trHeight)
+        
+    trPr.append(trHeight)
 
 
 def set_row_height_exact(row, height_twips):
@@ -65,6 +80,44 @@ def set_cell_bottom_border(cell):
     
     tcBorders.append(bottom_border)
     tcPr.append(tcBorders)
+
+
+def set_group_top_border(cell):
+    """ Adiciona uma borda superior sólida (preta, 0.5pt) a uma célula específica. """
+    tcPr = cell._tc.get_or_add_tcPr()
+    tcBorders = OxmlElement('w:tcBorders')
+    
+    top_border = OxmlElement('w:top') 
+    top_border.set(qn('w:val'), 'single') 
+    top_border.set(qn('w:sz'), '4')       
+    top_border.set(qn('w:color'), '000000') 
+    
+    tcBorders.append(top_border)
+    tcPr.append(tcBorders)
+
+
+def set_cell_all_borders(cell):
+    """ Aplica bordas sólidas em todas as direções da célula (usando XML). """
+    tcPr = cell._tc.get_or_add_tcPr()
+    tcBorders = OxmlElement('w:tcBorders')
+    
+    for side in ['w:top', 'w:bottom', 'w:left', 'w:right']:
+        border = OxmlElement(side) 
+        border.set(qn('w:val'), 'single') 
+        border.set(qn('w:sz'), '4')       
+        border.set(qn('w:color'), '000000') 
+        tcBorders.append(border)
+    
+    for existing_borders in tcPr.findall(qn('w:tcBorders')):
+        tcPr.remove(existing_borders)
+    tcPr.append(tcBorders)
+
+
+def remove_all_borders(cell):
+    """ Remove todas as bordas da célula (usando XML). """
+    tcPr = cell._tc.get_or_add_tcPr()
+    for existing_borders in tcPr.findall(qn('w:tcBorders')):
+        tcPr.remove(existing_borders)
 
 
 def add_page_number(footer):
@@ -112,19 +165,6 @@ def limpar_espacamento_lista(paragraph):
         except:
             pass
     pPr.append(spacing)
-
-def set_group_top_border(cell):
-    """ Adiciona uma borda superior sólida (preta, 0.5pt) a uma célula específica. """
-    tcPr = cell._tc.get_or_add_tcPr()
-    tcBorders = OxmlElement('w:tcBorders')
-    
-    top_border = OxmlElement('w:top') 
-    top_border.set(qn('w:val'), 'single') 
-    top_border.set(qn('w:sz'), '4')       
-    top_border.set(qn('w:color'), '000000') 
-    
-    tcBorders.append(top_border)
-    tcPr.append(tcBorders)
 
 # --- 5. FUNÇÕES DE PROCESSAMENTO E CRIAÇÃO ---
 
@@ -227,11 +267,50 @@ def extrair_conteudo_mapeado(caminho_arquivo_docx, pattern_titulo, pattern_legen
                     "dados": dados_tabela_nucleos
                 })
                 
-            elif texto == "[INSERIR_TABELA_HISTORICOS]":
+            elif texto == "[INSERIR_TABELA_PROCESSOS]":
                 conteudo_mapeado[chave_titulo_atual].append({
-                    "tipo": "TABELA_HISTORICOS",
-                    "dados": dados_tabela_historicos
+                    "tipo": "TABELA_PROCESSOS",
+                    "dados": dados_tabela_processos
                 })
+
+            elif texto == "[INSERIR_TABELA_JULGAMENTOS]":
+                conteudo_mapeado[chave_titulo_atual].append({
+                    "tipo": "TABELA_JULGAMENTOS",
+                    "dados": dados_tabela_julgamentos
+                })
+
+            elif texto == "[INSERIR_TABELA_ACERVO]":
+                conteudo_mapeado[chave_titulo_atual].append({
+                    "tipo": "TABELA_ACERVO",
+                    "dados": dados_tabela_acervo
+                })
+
+            elif texto == "[INSERIR_TABELA_ORCAMENTO]":
+                conteudo_mapeado[chave_titulo_atual].append({
+                    "tipo": "TABELA_ORCAMENTO",
+                    "dados": dados_tabela_orcamento
+                })
+
+            # NOVO GATILHO ADICIONADO AQUI
+            elif texto == "[INSERIR_TABELA_ORCAMENTO_ACAO]":
+                conteudo_mapeado[chave_titulo_atual].append({
+                "tipo": "TABELA_ORCAMENTO_ACAO", # Novo tipo
+                "dados": dados_tabela_orcamento_acao
+                })
+
+            # NOVO GATILHO PARA TABELA 11 CONJUNTA
+            elif texto == "[INSERIR_TABELA_ORCAMENTO_CONJUNTO]":
+                conteudo_mapeado[chave_titulo_atual].append({
+                    "tipo": "TABELA_ORCAMENTO_CONJUNTO", # Novo tipo
+                    "dados": dados_tabela_orcamento_2025
+                    })
+
+            # >>> NOVA CHAVE DE QUEBRA DE PÁGINA ADICIONADA AQUI <<<
+            elif texto == "[INSERIR_QUEBRA_PAGINA]":
+                conteudo_mapeado[chave_titulo_atual].append({
+                    "tipo": "QUEBRA_PAGINA", 
+                    "dados": None
+                })    
 
             elif re.search(pattern_legenda, texto, re.IGNORECASE):
                 conteudo_mapeado[chave_titulo_atual].append({
@@ -389,7 +468,6 @@ def adicionar_tabela_atos(document, dados):
     run_titulo.font.name = FONTE
     run_titulo.font.size = Pt(8)
     p_titulo_tabela.paragraph_format.space_after = Pt(12) 
-
 
 # --- COMPONENTE: TABELA 02 (ÁREAS) ---
 def adicionar_tabela_areas(document, dados):
@@ -864,12 +942,11 @@ def adicionar_tabela_nucleos(document, dados):
     run_titulo.font.size = Pt(8)
     p_titulo_tabela.paragraph_format.space_after = Pt(30)
 
-
-# --- NOVO COMPONENTE: TABELA 06 (DADOS HISTÓRICOS) ---
-def adicionar_tabela_historicos(document, dados):
+# --- NOVO COMPONENTE: TABELAS DE DADOS (PROCESSOS, JULGAMENTOS, ACERVO) ---
+def adicionar_tabela_processos(document, dados):
     """
-    Cria a Tabela 06 (Dados Históricos), aplicando cor de destaque à
-    coluna do ano mais recente (2024), margens e altura de linha fixa.
+    Cria tabelas de dados de 7 colunas (Processos, Julgamentos, Acervo) com 
+    destaque na coluna mais recente, altura fixa e bordas parciais.
     """
     
     # --- VARIÁVEIS DE COR E ESTILO ---
@@ -879,12 +956,12 @@ def adicionar_tabela_historicos(document, dados):
     COR_PRETO_RGB = RGBColor(0, 0, 0) 
     TAMANHO_FONTE_PADRAO = Pt(12) 
     FONTE = 'Calibri'
-    NUM_COLUNAS = 7
+    NUM_COLUNAS = 7     
     
     # NOVAS CORES (Hexadecimais)
     COR_SUB_HEADER_COLUNA = '44546A' 
     COR_DADOS_COLUNA = 'D5DCE4'      
-    COLUNA_DESTAQUE_INDEX = 5        # Coluna "2024"
+    COLUNA_DESTAQUE_INDEX = 5        # Coluna do ano mais recente (2024)
     
     ALTURA_LINHA_TWIPS = 284 
     
@@ -903,6 +980,24 @@ def adicionar_tabela_historicos(document, dados):
         table.columns[i].width = width
 
     data_row_index = 0 
+    
+    # Extrai o nome do cabeçalho principal e a legenda para uso dinâmico
+    titulo_principal = dados[0][1] # Ex: "Processos Distribuídos"
+    
+    # Determina o número da tabela dinamicamente (para a legenda)
+    if "PROCESSOS" in titulo_principal:
+        num_tabela = 6
+        legenda_padrao = "Tabela 06 - Número de processos distribuídos. Fonte: Centro de Informações para a Gestão Institucional – CEINFO"
+    elif "JULGAMENTOS" in titulo_principal:
+        num_tabela = 7
+        legenda_padrao = "Tabela 07 - Julgamentos realizados. Fonte: Centro de Informações para a Gestão Institucional – CEINFO"
+    elif "ACERVO" in titulo_principal:
+        num_tabela = 8
+        legenda_padrao = "Tabela 08 - Dados do acervo. Fonte: Centro de Informações para a Gestão Institucional – CEINFO"
+    else:
+        num_tabela = 'XX'
+        legenda_padrao = f"Tabela {num_tabela} - Dados Históricos. Fonte: CEINFO"
+
 
     for i, row_data_full in enumerate(dados):
         
@@ -1011,18 +1106,300 @@ def adicionar_tabela_historicos(document, dados):
                 p_format.space_after = Pt(0)
                 
 
-    # --- LEGENDA/FONTE (Tabela 06) ---
+    # --- LEGENDA/FONTE (Tabela 06/07/08) ---
     p_titulo_tabela = document.add_paragraph(style='Normal')
     p_titulo_tabela.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_titulo_tabela.paragraph_format.space_before = Pt(6)
     
-    run_titulo = p_titulo_tabela.add_run("Tabela 06 - Número de processos distribuídos. Fonte: Centro de Informações para a Gestão Institucional – CEINFO")
+    run_titulo = p_titulo_tabela.add_run(legenda_padrao)
     
     run_titulo.bold = False 
     run_titulo.font.name = FONTE
     run_titulo.font.size = Pt(8)
-    p_titulo_tabela.paragraph_format.space_after = Pt(12)
+    p_titulo_tabela.paragraph_format.space_after = Pt(30)
 
+# --- NOVO COMPONENTE: TABELA 09 (ORÇAMENTO - 2 COLUNAS) ---
+# Adiciona um novo argumento para receber o título
+def adicionar_tabela_orcamento(document, titulo_acima, dados):
+    """
+    Cria a Tabela 09 (Orçamento - 2 colunas) com:
+    - Altura fixa nos cabeçalhos (HEADER_MERGE e SUB_HEADER).
+    - Altura MÍNIMA de 1 Pt (20 Twips) a mais nas linhas de dados.
+    """
+    # --- VARIÁVEIS DE COR E ESTILO ---
+    COR_HEADER_ESCURO_HEX = '7F7F7F'    
+    COR_LINHA_TOTAL_HEX = 'BFBFBF'      
+    COR_BRANCO_RGB = RGBColor(255, 255, 255)
+    COR_PRETO_RGB = RGBColor(0, 0, 0)
+    COR_BRANCO_HEX = 'FFFFFF'
+    
+    TAMANHO_FONTE_PADRAO = Pt(12)
+    FONTE = 'Calibri'
+    NUM_COLUNAS_DADOS = 2  
+    
+    # Altura FIXA para cabeçalhos (aproximadamente 0.7 cm)
+    ALTURA_FIXA_TWIPS = 397 
+    
+    # Altura MÍNIMA para dados (Altura padrão 12pt + 1pt extra)
+    # 12 Pt (240 Twips) + 1 Pt (20 Twips) = 260 Twips
+    ALTURA_MINIMA_TWIPS = 260 
+
+    # --- FUNÇÃO AUXILIAR DE BORDA (Aplicada em todas as direções) ---
+    def set_cell_all_borders(cell):
+        tcPr = cell._tc.get_or_add_tcPr()
+        tcBorders = OxmlElement('w:tcBorders')
+        
+        for side in ['w:top', 'w:bottom', 'w:left', 'w:right']:
+            border = OxmlElement(side) 
+            border.set(qn('w:val'), 'single') 
+            border.set(qn('w:sz'), '4')       
+            border.set(qn('w:color'), '000000') 
+            tcBorders.append(border)
+        
+        for existing_borders in tcPr.findall(qn('w:tcBorders')):
+            tcPr.remove(existing_borders)
+        tcPr.append(tcBorders)
+
+    # --- FUNÇÃO AUXILIAR PARA REMOVER TODAS AS BORDAS ---
+    def remove_all_borders(cell):
+        tcPr = cell._tc.get_or_add_tcPr()
+        for existing_borders in tcPr.findall(qn('w:tcBorders')):
+            tcPr.remove(existing_borders)
+
+
+    # --- 1. PLOTAR O TÍTULO ACIMA DA TABELA ---
+    p_titulo_acima = document.add_paragraph(style='Normal')
+    p_titulo_acima.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_titulo_acima.paragraph_format.space_after = Pt(6)
+    
+    run_titulo = p_titulo_acima.add_run(titulo_acima)
+    run_titulo.bold = True
+    run_titulo.font.name = FONTE
+    run_titulo.font.size = TAMANHO_FONTE_PADRAO
+    run_titulo.font.color.rgb = COR_PRETO_RGB 
+    
+    
+    # --- 2. ESTRUTURA E LARGURA DA TABELA ---
+    table = document.add_table(rows=0, cols=NUM_COLUNAS_DADOS)
+    table.style = 'Table Grid'
+    
+    largura_total_cm = 16.0 
+    table.columns[0].width = Cm(largura_total_cm * 0.60)
+    table.columns[1].width = Cm(largura_total_cm * 0.40)
+
+    legenda_padrao = "Tabela 09 - Despesa realizada por ação (Unidade 1031). Fonte: Armazém de Informações - BO SIAFI/MG"
+    
+    data_row_index = 0
+    
+    # --- 3. PREENCHIMENTO DA TABELA ---
+    for i, row_data_full in enumerate(dados):
+        tipo = row_data_full[0]
+        dados_da_linha = row_data_full[1:1 + NUM_COLUNAS_DADOS] 
+        
+        row = table.add_row()
+        
+        # >>> LÓGICA CONDICIONAL DE ALTURA <<<
+        if tipo == "SUB_HEADER":
+            # Altura Fixa para Cabeçalho
+            set_row_height_exact(row, ALTURA_FIXA_TWIPS) 
+        elif tipo in ["DATA_ROW", "TOTAL_ROW"]:
+            # Altura MÍNIMA para dados (permite expansão com um mínimo de 1pt extra)
+            set_row_height_at_least(row, ALTURA_MINIMA_TWIPS)
+            
+        if tipo == "DATA_ROW" or tipo == "TOTAL_ROW":
+            data_row_index += 1
+            
+        for col_idx in range(NUM_COLUNAS_DADOS):
+            cell = row.cells[col_idx]
+            
+            remove_all_borders(cell)
+            set_cell_vertical_alignment(cell, 'center')
+            
+            p = cell.paragraphs[0]
+            # Alinhamento do conteúdo (Col 0: Left, Col 1: Center)
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER if col_idx == 1 else WD_ALIGN_PARAGRAPH.LEFT
+            
+            p_format = p.paragraph_format
+            p_format.space_before = Pt(0)
+            p_format.space_after = Pt(0)
+            
+            p.text = dados_da_linha[col_idx]
+            run = p.runs[0] 
+            
+            run.font.name = FONTE
+            run.font.size = TAMANHO_FONTE_PADRAO
+            run.font.color.rgb = COR_PRETO_RGB 
+
+            # TIPO 1: SUB-HEADER
+            if tipo == "SUB_HEADER":
+                set_cell_all_borders(cell)
+                
+                shading_elm = OxmlElement('w:shd')
+                shading_elm.set(qn('w:fill'), COR_HEADER_ESCURO_HEX)
+                cell._tc.get_or_add_tcPr().append(shading_elm)
+                
+                run.font.color.rgb = COR_BRANCO_RGB
+                run.bold = True
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER # Centraliza o texto do SUB-HEADER
+                
+            # TIPO 2 & 3: DADOS (DATA_ROW e TOTAL_ROW)
+            elif tipo in ["DATA_ROW", "TOTAL_ROW"]:
+                
+                set_cell_all_borders(cell)
+                
+                if tipo == "TOTAL_ROW":
+                    run.bold = True
+                    
+                    shading_elm = OxmlElement('w:shd')
+                    shading_elm.set(qn('w:fill'), COR_LINHA_TOTAL_HEX)
+                    cell._tc.get_or_add_tcPr().append(shading_elm)
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+
+    # --- 4. LEGENDA/FONTE FINAL ---
+    p_legenda = document.add_paragraph(style='Normal')
+    p_legenda.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_legenda.paragraph_format.space_before = Pt(6)
+    
+    run_legenda = p_legenda.add_run(legenda_padrao)
+    run_legenda.bold = False 
+    run_legenda.font.name = FONTE
+    run_legenda.font.size = Pt(8)
+    
+    p_legenda.paragraph_format.space_after = Pt(15)
+
+# --- NOVO COMPONENTE: TABELA 11 (ORÇAMENTO CONJUNTO) ---
+def adicionar_tabela_orcamento_conjunto(document, dados):
+    """
+    Cria a Tabela 11, combinando UO 1031 e UO 4031 em uma única tabela,
+    com correção estética e lógica de altura para o texto.
+    """
+    # --- VARIÁVEIS DE COR E ESTILO ---
+    COR_HEADER_ESCURO_HEX = '7F7F7F'    # Cor do GROUP_TITLE
+    COR_LINHA_TOTAL_HEX = 'BFBFBF'      # Cor da linha TOTAL
+    COR_BRANCO_RGB = RGBColor(255, 255, 255) 
+    COR_PRETO_RGB = RGBColor(0, 0, 0)
+    
+    TAMANHO_FONTE_PADRAO = Pt(12)
+    FONTE = 'Calibri'
+    NUM_COLUNAS_DADOS = 2  
+    
+    ALTURA_FIXA_TWIPS = 397 # Altura FIXA para o SUB_HEADER
+    ALTURA_MINIMA_TWIPS = 260 # Altura MÍNIMA para DATA/TOTAL (12pt + 1pt extra)
+
+    # --- 1. ESTRUTURA E LARGURA DA TABELA ---
+    table = document.add_table(rows=0, cols=NUM_COLUNAS_DADOS)
+    table.style = 'Table Grid'
+    
+    largura_total_cm = 16.0 
+    table.columns[0].width = Cm(largura_total_cm * 0.60)
+    table.columns[1].width = Cm(largura_total_cm * 0.40)
+
+    legenda_padrao = "Tabela 11 - Orçamento 2024 por ação orçamentária. Fonte: Lei Orçamentária Anual nº 24.678, de 30/12/2024. Fonte: Lei Orçamentária Anual nº 25.124, de 30/12/2024."
+    
+    # --- 2. PREENCHIMENTO DA TABELA ---
+    for i, row_data_full in enumerate(dados):
+        tipo = row_data_full[0]
+        dados_da_linha = row_data_full[1:1 + NUM_COLUNAS_DADOS] 
+        
+        row = table.add_row()
+        
+        # >>> LÓGICA CONDICIONAL DE ALTURA CORRIGIDA <<<
+        if tipo == "SUB_HEADER": 
+            set_row_height_exact(row, ALTURA_FIXA_TWIPS) 
+        elif tipo in ["GROUP_TITLE", "DATA_ROW", "TOTAL_ROW"]:
+            set_row_height_at_least(row, ALTURA_MINIMA_TWIPS)
+            
+        
+        for col_idx in range(NUM_COLUNAS_DADOS):
+            cell = row.cells[col_idx]
+            
+            remove_all_borders(cell)
+            set_cell_vertical_alignment(cell, 'center')
+            
+            p = cell.paragraphs[0]
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
+            
+            # --- TIPO 1: GROUP_TITLE (CORRIGIDO) ---
+            if tipo == "GROUP_TITLE":
+                if col_idx == 0:
+                    
+                    cell.merge(row.cells[1]) 
+                    
+                    p.text = dados_da_linha[col_idx] 
+                    run = p.runs[0] 
+                    
+                    # Estilo: Branco/Negrito/Esquerda (Corpo do Orçamento)
+                    run.font.name = FONTE
+                    run.font.size = TAMANHO_FONTE_PADRAO
+                    run.font.color.rgb = COR_BRANCO_RGB 
+                    run.bold = True
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    
+                    set_cell_all_borders(cell) 
+                    
+                    shading_elm = OxmlElement('w:shd')
+                    shading_elm.set(qn('w:fill'), COR_HEADER_ESCURO_HEX)
+                    cell._tc.get_or_add_tcPr().append(shading_elm)
+
+                continue 
+            
+            # --- PROCESSAMENTO GERAL (Sub-Header e Dados) ---
+            
+            p.text = dados_da_linha[col_idx] 
+            run = p.runs[0] 
+            
+            run.font.name = FONTE
+            run.font.size = TAMANHO_FONTE_PADRAO
+            run.font.color.rgb = COR_PRETO_RGB 
+            run.bold = False
+
+            # TIPO 2: SUB-HEADER (ESTÉTICA CORRIGIDA)
+            if tipo == "SUB_HEADER":
+                set_cell_all_borders(cell)
+                
+                # Fundo BRANCO (nenhum sombreamento é aplicado)
+                
+                # Texto PRETO, Negrito, Centralizado
+                run.font.color.rgb = COR_PRETO_RGB
+                run.bold = True
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+            # TIPO 3 & 4: DADOS (DATA_ROW e TOTAL_ROW)
+            elif tipo in ["DATA_ROW", "TOTAL_ROW"]:
+                
+                set_cell_all_borders(cell)
+                
+                # Alinhamento da coluna de DADOS: Esquerda (Col 0) ou Centro (Col 1)
+                # Alinhamento do TOTAL_ROW: Centro (todas as colunas)
+                if tipo == "TOTAL_ROW":
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER # Centralizado
+                else: # DATA_ROW
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER if col_idx == 1 else WD_ALIGN_PARAGRAPH.LEFT
+
+                run.font.color.rgb = COR_PRETO_RGB 
+                run.bold = False
+
+                if tipo == "TOTAL_ROW":
+                    run.bold = True
+                    
+                    shading_elm = OxmlElement('w:shd')
+                    shading_elm.set(qn('w:fill'), COR_LINHA_TOTAL_HEX)
+                    cell._tc.get_or_add_tcPr().append(shading_elm)
+
+
+    # --- 3. LEGENDA/FONTE FINAL ---
+    p_legenda = document.add_paragraph(style='Normal')
+    p_legenda.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_legenda.paragraph_format.space_before = Pt(6)
+    
+    run_legenda = p_legenda.add_run(legenda_padrao)
+    run_legenda.bold = False 
+    run_legenda.font.name = FONTE
+    run_legenda.font.size = Pt(8)
+    
+    p_legenda.paragraph_format.space_after = Pt(15)        
 
 def aplicar_estilo_capa(paragrafo, texto, tamanho_pt):
     """Aplica o estilo de fonte Bahnschrift com um tamanho específico."""
@@ -1141,7 +1518,12 @@ if __name__ == "__main__":
                         p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                         p_format = p.paragraph_format
                         p_format.line_spacing = 1.5
-                        p_format.space_after = Pt(8) 
+                        p_format.space_after = Pt(8)
+
+                        # >>> NOVO PROCESSADOR DE QUEBRA DE PÁGINA AQUI <<<
+                    elif bloco['tipo'] == 'QUEBRA_PAGINA':
+                        print("--- Inserindo QUEBRA DE PÁGINA forçada ---")
+                        document.add_page_break()
                     
                     elif bloco['tipo'] == 'FIGURA':
                         legenda_completa = bloco['legenda_completa']
@@ -1189,7 +1571,7 @@ if __name__ == "__main__":
                             run_fonte.font.name = 'Calibri'
                             run_fonte.font.size = Pt(8) 
                             p_fonte.alignment = WD_ALIGN_PARAGRAPH.LEFT
-                            p_fonte.paragraph_format.space_after = Pt(12)
+                            p_fonte.paragraph_format.space_after = Pt(30)
 
                     elif bloco['tipo'] == 'TABELA_ATOS':
                         print(f"--- Inserindo Tabela 01 (Atos) para {titulo_chave} ---")
@@ -1211,10 +1593,41 @@ if __name__ == "__main__":
                         print(f"--- Inserindo Tabela 05 (Núcleos) para {titulo_chave} ---")
                         adicionar_tabela_nucleos(document, bloco['dados'])
 
-                    elif bloco['tipo'] == 'TABELA_HISTORICOS':
+                    elif bloco['tipo'] == 'TABELA_PROCESSOS':
                         print(f"--- Inserindo Tabela 06 (Dados Históricos) para {titulo_chave} ---")
-                        adicionar_tabela_historicos(document, bloco['dados'])
+                        adicionar_tabela_processos(document, bloco['dados'])
 
+                    elif bloco['tipo'] == 'TABELA_JULGAMENTOS':
+                        print(f"--- Inserindo Tabela 07 (Dados Históricos) para {titulo_chave} ---")
+                        adicionar_tabela_processos(document, bloco['dados'])
+                        
+                    elif bloco['tipo'] == 'TABELA_ACERVO':
+                        print(f"--- Inserindo Tabela 08 (Dados Históricos) para {titulo_chave} ---")
+                        adicionar_tabela_processos(document, bloco['dados'])
+                    
+                    elif bloco['tipo'] == 'TABELA_ORCAMENTO':
+                        print(f"--- Inserindo Tabela 09 (Orçamento) para {titulo_chave} ---") 
+                        adicionar_tabela_orcamento(
+                            document, 
+                            TITULO_TABELA_ORCAMENTO, 
+                            bloco['dados']
+                        )
+                    
+                    elif bloco['tipo'] == 'TABELA_ORCAMENTO_ACAO':
+                        print(f"--- Inserindo Tabela 10 (Orçamento - Ação) para {titulo_chave} ---")
+                        adicionar_tabela_orcamento(
+                            document, 
+                            TITULO_TABELA_ORCAMENTO_ACAO,
+                            bloco['dados']
+                        )
+
+                    elif bloco['tipo'] == 'TABELA_ORCAMENTO_CONJUNTO':
+                        print(f"--- Inserindo Tabela 11 (Orçamento 2025) para {titulo_chave} ---")
+                        adicionar_tabela_orcamento_conjunto( 
+                            document, 
+                            bloco['dados'] 
+                        )
+                        
     # --- FIM DA SEÇÃO ---
 
     # --- SALVAR O DOCUMENTO ---
