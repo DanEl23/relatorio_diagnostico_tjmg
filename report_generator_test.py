@@ -10,7 +10,7 @@ from docx.oxml.ns import qn
 
 # --- 1. IMPORTAÇÃO DOS DADOS EXTERNOS ---
 try:
-    from report_data import dados_tabela_atos, dados_tabela_areas, dados_tabela_estrutura, dados_tabela_comarcas, dados_tabela_nucleos, dados_tabela_processos, dados_tabela_julgamentos, dados_tabela_acervo, dados_tabela_orcamento, TITULO_TABELA_ORCAMENTO, dados_tabela_orcamento_acao, TITULO_TABELA_ORCAMENTO_ACAO, dados_tabela_orcamento_2025, MAPA_IMAGENS
+    from report_data import dados_tabela_atos, dados_tabela_areas, dados_tabela_estrutura, dados_tabela_comarcas, dados_tabela_nucleos, dados_tabela_processos, dados_tabela_julgamentos, dados_tabela_acervo, dados_tabela_orcamento, TITULO_TABELA_ORCAMENTO, dados_tabela_orcamento_acao, TITULO_TABELA_ORCAMENTO_ACAO, dados_tabela_orcamento_2025, dados_tabela_cidades, MAPA_IMAGENS
 except ImportError:
     print("!!! ERRO CRÍTICO: Não foi possível encontrar o arquivo 'report_data.py'.")
     print("!!! Certifique-se de que 'report_data.py' está no mesmo diretório.")
@@ -18,7 +18,10 @@ except ImportError:
 
 # --- 2. DEFINIÇÃO DAS EXPRESSÕES REGULARES ---
 PATTERN_SUMARIO = r'^\s*(\d+(?:\.\d+)*)\.?\s+(.*?)\s*[\. ]*\d+$' 
-PATTERN_CONTEUDO = r'^\s*(\d+(\.\d+)*)\.?\s*(.*)$'
+# Pattern atualizado: exige pelo menos um ponto na sequência (ex: 8.10, 3.9.1)
+# Cada segmento após o ponto deve ter no máximo 2 dígitos
+# Não aceita apenas números sem ponto (ex: 810) ou com mais de 2 dígitos após o ponto (ex: 3.123)
+PATTERN_CONTEUDO = r'^\s*(\d+(?:\.\d{1,2})+)\.?\s+(.*)$'
 PATTERN_LEGENDA = r'^(Figura|Gráfico)\s+\d+' 
 
 # --- 3. DADOS BRUTOS (HARDCODED) ---
@@ -39,7 +42,31 @@ def configurar_margens(documento, superior_cm, esquerda_cm, direita_cm, inferior
 
 
 def set_row_height_at_least(row, height_twips):
-    """ Define a altura MÍNIMA da linha usando XML (twips), permitindo expansão. """
+    """ Define a altura MÍNIMA da linha usando XML (twips), permitindo expansão. 
+    Esta versão aplica a altura mínima obrigatória de 0.6 cm (340 twips). """
+    # IMPORTANTE: 0.6 cm = 340 twips (altura mínima obrigatória)
+    ALTURA_MINIMA_OBRIGATORIA = 340
+    
+    # Garante que a altura não seja menor que 0.6 cm
+    altura_final = max(height_twips, ALTURA_MINIMA_OBRIGATORIA)
+    
+    tr = row._tr
+    trPr = tr.get_or_add_trPr()
+    
+    trHeight = OxmlElement('w:trHeight')
+    trHeight.set(qn('w:val'), str(altura_final))
+    trHeight.set(qn('w:hRule'), 'atLeast') # Define a regra como "At Least"
+    
+    for existing_trHeight in trPr.findall(qn('w:trHeight')):
+        trPr.remove(existing_trHeight)
+        
+    trPr.append(trHeight)
+
+
+def set_row_height_flexible(row, height_twips):
+    """ Define a altura MÍNIMA da linha usando XML (twips), permitindo expansão.
+    Esta versão NÃO aplica altura mínima obrigatória - aceita qualquer valor. """
+    
     tr = row._tr
     trPr = tr.get_or_add_trPr()
     
@@ -55,11 +82,17 @@ def set_row_height_at_least(row, height_twips):
 
 def set_row_height_exact(row, height_twips):
     """ Define a altura exata da linha usando XML (twips). """
+    # IMPORTANTE: 0.6 cm = 340 twips (altura mínima obrigatória)
+    ALTURA_MINIMA_OBRIGATORIA = 340
+    
+    # Garante que a altura não seja menor que 0.6 cm
+    altura_final = max(height_twips, ALTURA_MINIMA_OBRIGATORIA)
+    
     tr = row._tr
     trPr = tr.get_or_add_trPr()
     
     trHeight = OxmlElement('w:trHeight')
-    trHeight.set(qn('w:val'), str(height_twips))
+    trHeight.set(qn('w:val'), str(altura_final))
     trHeight.set(qn('w:hRule'), 'exact') 
     
     for existing_trHeight in trPr.findall(qn('w:trHeight')):
@@ -207,12 +240,14 @@ def extrair_sumario_para_json(caminho_arquivo_docx, pattern_regex):
 def extrair_conteudo_mapeado(caminho_arquivo_docx, pattern_titulo, pattern_legenda):
     """
     Lê o DOCX de conteúdo, mapeia parágrafos e identifica marcadores.
-    (Atualizado para Tabela 05)
+    (Atualizado para Tabela 05 e listas numeradas/marcadores)
     """
     print(f"Iniciando extração de conteúdo de: {caminho_arquivo_docx}")
     
     conteudo_mapeado = {}
     chave_titulo_atual = None
+    modo_lista = None  # Controla se estamos dentro de uma lista: None, 'NUMERADA' ou 'MARCADORES'
+    itens_lista_temporaria = []  # Armazena itens enquanto a lista está sendo construída
     
     try:
         documento_conteudo = Document(caminho_arquivo_docx)
@@ -227,11 +262,49 @@ def extrair_conteudo_mapeado(caminho_arquivo_docx, pattern_titulo, pattern_legen
         if not texto:
             continue 
 
+        # Se estamos dentro de uma lista de marcadores ou numerada, não verificamos se é título
+        # Primeiro verificamos os marcadores de controle de lista
+        if texto == "[INICIAR_LISTA_NUMERICA]":
+            modo_lista = 'NUMERADA'
+            itens_lista_temporaria = []
+            continue
+            
+        elif texto == "[FINALIZAR_LISTA_NUMERICA]":
+            if modo_lista == 'NUMERADA' and itens_lista_temporaria:
+                conteudo_mapeado[chave_titulo_atual].append({
+                    "tipo": "LISTA_NUMERADA",
+                    "itens": itens_lista_temporaria.copy()
+                })
+            modo_lista = None
+            itens_lista_temporaria = []
+            continue
+        
+        elif texto == "[INICIAR_LISTA_MARCADORES]":
+            modo_lista = 'MARCADORES'
+            itens_lista_temporaria = []
+            continue
+            
+        elif texto == "[FINALIZAR_LISTA_MARCADORES]":
+            if modo_lista == 'MARCADORES' and itens_lista_temporaria:
+                conteudo_mapeado[chave_titulo_atual].append({
+                    "tipo": "LISTA_MARCADORES",
+                    "itens": itens_lista_temporaria.copy()
+                })
+            modo_lista = None
+            itens_lista_temporaria = []
+            continue
+
+        # Se estamos em modo de lista, adiciona o texto à lista sem verificar se é título
+        if modo_lista in ['NUMERADA', 'MARCADORES']:
+            itens_lista_temporaria.append(texto)
+            continue
+
+        # Agora sim, verifica se é um título (apenas se NÃO estivermos em modo de lista)
         match_titulo = re.search(pattern_titulo, texto, re.IGNORECASE)
         
         if match_titulo:
             prefixo = match_titulo.group(1).strip()
-            titulo = match_titulo.group(3).strip()
+            titulo = match_titulo.group(2).strip()
             chave_titulo_atual = f"{prefixo} {titulo}" 
             conteudo_mapeado[chave_titulo_atual] = []
             
@@ -310,15 +383,33 @@ def extrair_conteudo_mapeado(caminho_arquivo_docx, pattern_titulo, pattern_legen
                 conteudo_mapeado[chave_titulo_atual].append({
                     "tipo": "QUEBRA_PAGINA", 
                     "dados": None
-                })    
+                })
 
             elif re.search(pattern_legenda, texto, re.IGNORECASE):
                 conteudo_mapeado[chave_titulo_atual].append({
                     "tipo": "FIGURA",
                     "legenda_completa": texto 
                 })
+            
+            # >>> NOVO: TEXTO COM DESTAQUE (começa com #) <<<
+            elif texto.startswith("#"):
+                texto_sem_hashtag = texto[1:].strip()  # Remove o # e espaços
+                conteudo_mapeado[chave_titulo_atual].append({
+                    "tipo": "TEXTO_DESTAQUE",
+                    "texto": texto_sem_hashtag
+                })
+
+            # ... (Dentro da função extrair_conteudo_mapeado)
+            
+            # NOVO GATILHO PARA TABELA 12 (CIDADES)
+            elif texto == "[INSERIR_TABELA_CIDADES]":
+                conteudo_mapeado[chave_titulo_atual].append({
+                    "tipo": "TABELA_CIDADES", 
+                    "dados": dados_tabela_cidades
+                })
   
             else:
+                # Se não é nenhum marcador especial, adiciona como parágrafo normal
                 conteudo_mapeado[chave_titulo_atual].append({
                     "tipo": "PARAGRAFO",
                     "texto": texto
@@ -378,6 +469,9 @@ def adicionar_tabela_atos(document, dados):
     TAMANHO_FONTE_PADRAO = Pt(12) 
     FONTE = 'Calibri'
     
+    # Altura mínima obrigatória de 0.6 cm = 340 twips
+    ALTURA_MINIMA_TWIPS = 340
+    
     table = document.add_table(rows=1, cols=len(dados[0]))
     table.style = 'Table Grid'
     table.alignment = WD_TABLE_ALIGNMENT.LEFT
@@ -392,6 +486,9 @@ def adicionar_tabela_atos(document, dados):
             row = table.add_row()
         else:
             row = table.rows[0]
+        
+        # Define altura mínima para todas as linhas (Tabela 01 - sem obrigatoriedade)
+        set_row_height_flexible(row, ALTURA_MINIMA_TWIPS)
             
         tr = row._tr 
         trPr = tr.get_or_add_trPr() 
@@ -481,6 +578,9 @@ def adicionar_tabela_areas(document, dados):
     TAMANHO_FONTE_PADRAO = Pt(11) 
     FONTE = 'Calibri'
     
+    # Altura mínima obrigatória de 0.6 cm = 340 twips
+    ALTURA_MINIMA_TWIPS = 220
+    
     table = document.add_table(rows=0, cols=2)
     
     try:
@@ -502,6 +602,9 @@ def adicionar_tabela_areas(document, dados):
         col2_texto = row_data[2]
         
         row = table.add_row()
+        
+        # Define altura mínima para todas as linhas (Tabela 02 - sem obrigatoriedade)
+        set_row_height_flexible(row, ALTURA_MINIMA_TWIPS)
         
         tr = row._tr 
         trPr = tr.get_or_add_trPr() 
@@ -674,6 +777,9 @@ def adicionar_tabela_estrutura(document, dados):
     TAMANHO_FONTE_PADRAO = Pt(11) 
     FONTE = 'Calibri'
     
+    # Altura mínima obrigatória de 0.6 cm = 340 twips
+    ALTURA_MINIMA_TWIPS = 220
+    
     table = document.add_table(rows=0, cols=1) 
     
     try:
@@ -693,6 +799,9 @@ def adicionar_tabela_estrutura(document, dados):
         col1_texto = row_data[1]
         
         row = table.add_row()
+        
+        # Define altura mínima para todas as linhas (Tabela 03 - sem obrigatoriedade)
+        set_row_height_flexible(row, ALTURA_MINIMA_TWIPS)
         
         tr = row._tr 
         trPr = tr.get_or_add_trPr() 
@@ -764,6 +873,9 @@ def adicionar_tabela_comarcas(document, dados):
     TAMANHO_FONTE_PADRAO = Pt(11) 
     FONTE = 'Calibri'
     
+    # Altura mínima obrigatória de 0.6 cm = 340 twips
+    ALTURA_MINIMA_TWIPS = 220
+    
     table = document.add_table(rows=0, cols=4)
     table.space_after = Pt(20) 
     
@@ -783,6 +895,9 @@ def adicionar_tabela_comarcas(document, dados):
         
         tipo_linha = row_data[0]
         row = table.add_row()
+        
+        # Define altura mínima para todas as linhas (Tabela 04 - sem obrigatoriedade)
+        set_row_height_flexible(row, ALTURA_MINIMA_TWIPS)
         
         tr = row._tr 
         trPr = tr.get_or_add_trPr() 
@@ -871,6 +986,9 @@ def adicionar_tabela_nucleos(document, dados):
     TAMANHO_FONTE_PADRAO = Pt(11) 
     FONTE = 'Calibri'
     
+    # Altura mínima obrigatória de 0.6 cm = 340 twips
+    ALTURA_MINIMA_TWIPS = 220
+    
     table = document.add_table(rows=0, cols=1) 
     
     try:
@@ -888,6 +1006,9 @@ def adicionar_tabela_nucleos(document, dados):
         col1_texto = row_data[1]
         
         row = table.add_row()
+        
+        # Define altura mínima para todas as linhas (Tabela 05 - sem obrigatoriedade)
+        set_row_height_flexible(row, ALTURA_MINIMA_TWIPS)
         
         tr = row._tr 
         trPr = tr.get_or_add_trPr() 
@@ -963,7 +1084,8 @@ def adicionar_tabela_processos(document, dados):
     COR_DADOS_COLUNA = 'D5DCE4'      
     COLUNA_DESTAQUE_INDEX = 5        # Coluna do ano mais recente (2024)
     
-    ALTURA_LINHA_TWIPS = 284 
+    # Altura mínima obrigatória de 0.6 cm = 340 twips (substitui o antigo valor)
+    ALTURA_MINIMA_TWIPS = 340
     
     # --- ESTRUTURA E LARGURA ---
     table = document.add_table(rows=0, cols=NUM_COLUNAS) 
@@ -1005,7 +1127,8 @@ def adicionar_tabela_processos(document, dados):
         row_data = row_data_full[1:] 
         
         row = table.add_row()
-        set_row_height_exact(row, ALTURA_LINHA_TWIPS)
+        # Define altura mínima (sem obrigatoriedade de 0.6cm)
+        set_row_height_flexible(row, ALTURA_MINIMA_TWIPS)
         
         tr = row._tr 
         trPr = tr.get_or_add_trPr() 
@@ -1119,7 +1242,6 @@ def adicionar_tabela_processos(document, dados):
     p_titulo_tabela.paragraph_format.space_after = Pt(30)
 
 # --- NOVO COMPONENTE: TABELA 09 (ORÇAMENTO - 2 COLUNAS) ---
-# Adiciona um novo argumento para receber o título
 def adicionar_tabela_orcamento(document, titulo_acima, dados):
     """
     Cria a Tabela 09 (Orçamento - 2 colunas) com:
@@ -1137,12 +1259,8 @@ def adicionar_tabela_orcamento(document, titulo_acima, dados):
     FONTE = 'Calibri'
     NUM_COLUNAS_DADOS = 2  
     
-    # Altura FIXA para cabeçalhos (aproximadamente 0.7 cm)
-    ALTURA_FIXA_TWIPS = 397 
-    
-    # Altura MÍNIMA para dados (Altura padrão 12pt + 1pt extra)
-    # 12 Pt (240 Twips) + 1 Pt (20 Twips) = 260 Twips
-    ALTURA_MINIMA_TWIPS = 260 
+    # Altura mínima obrigatória de 0.6 cm = 340 twips para TODAS as linhas
+    ALTURA_MINIMA_TWIPS = 340 
 
     # --- FUNÇÃO AUXILIAR DE BORDA (Aplicada em todas as direções) ---
     def set_cell_all_borders(cell):
@@ -1198,13 +1316,8 @@ def adicionar_tabela_orcamento(document, titulo_acima, dados):
         
         row = table.add_row()
         
-        # >>> LÓGICA CONDICIONAL DE ALTURA <<<
-        if tipo == "SUB_HEADER":
-            # Altura Fixa para Cabeçalho
-            set_row_height_exact(row, ALTURA_FIXA_TWIPS) 
-        elif tipo in ["DATA_ROW", "TOTAL_ROW"]:
-            # Altura MÍNIMA para dados (permite expansão com um mínimo de 1pt extra)
-            set_row_height_at_least(row, ALTURA_MINIMA_TWIPS)
+        # Define altura mínima de 0.6 cm para TODAS as linhas, permitindo expansão
+        set_row_height_at_least(row, ALTURA_MINIMA_TWIPS)
             
         if tipo == "DATA_ROW" or tipo == "TOTAL_ROW":
             data_row_index += 1
@@ -1284,8 +1397,8 @@ def adicionar_tabela_orcamento_conjunto(document, dados):
     FONTE = 'Calibri'
     NUM_COLUNAS_DADOS = 2  
     
-    ALTURA_FIXA_TWIPS = 397 # Altura FIXA para o SUB_HEADER
-    ALTURA_MINIMA_TWIPS = 260 # Altura MÍNIMA para DATA/TOTAL (12pt + 1pt extra)
+    # Altura mínima obrigatória de 0.6 cm = 340 twips para TODAS as linhas
+    ALTURA_MINIMA_TWIPS = 340
 
     # --- 1. ESTRUTURA E LARGURA DA TABELA ---
     table = document.add_table(rows=0, cols=NUM_COLUNAS_DADOS)
@@ -1304,11 +1417,8 @@ def adicionar_tabela_orcamento_conjunto(document, dados):
         
         row = table.add_row()
         
-        # >>> LÓGICA CONDICIONAL DE ALTURA CORRIGIDA <<<
-        if tipo == "SUB_HEADER": 
-            set_row_height_exact(row, ALTURA_FIXA_TWIPS) 
-        elif tipo in ["GROUP_TITLE", "DATA_ROW", "TOTAL_ROW"]:
-            set_row_height_at_least(row, ALTURA_MINIMA_TWIPS)
+        # Define altura mínima de 0.6 cm para TODAS as linhas, permitindo expansão
+        set_row_height_at_least(row, ALTURA_MINIMA_TWIPS)
             
         
         for col_idx in range(NUM_COLUNAS_DADOS):
@@ -1400,6 +1510,76 @@ def adicionar_tabela_orcamento_conjunto(document, dados):
     run_legenda.font.size = Pt(8)
     
     p_legenda.paragraph_format.space_after = Pt(15)        
+
+
+# --- NOVO COMPONENTE: TABELA 12 (CIDADES - 4 COLUNAS) ---
+def adicionar_tabela_cidades(document, dados):
+    """
+    Cria a Tabela de Cidades (4 colunas) com linhas zebradas, sem título/legenda,
+    e altura mínima de 0.6 cm.
+    """
+    # --- VARIÁVEIS DE COR E ESTILO ---
+    COR_LINHA_ZEBRADA_HEX = 'D9D9D9'  # Cinza Claro
+    COR_PRETO_RGB = RGBColor(0, 0, 0)
+    TAMANHO_FONTE_PADRAO = Pt(12)
+    FONTE = 'Calibri'
+    NUM_COLUNAS = 4 
+    
+    # Altura MÍNIMA OBRIGATÓRIA (0.6 cm = 340 Twips)
+    ALTURA_MINIMA_OBRIGATORIA_TWIPS = 340 
+
+    # --- ESTRUTURA E LARGURA ---
+    table = document.add_table(rows=0, cols=NUM_COLUNAS)
+    table.style = 'Table Grid' 
+
+    # Define largura igual para as 4 colunas
+    largura_coluna = Cm(16.0 / NUM_COLUNAS) 
+    for col in table.columns:
+        col.width = largura_coluna
+    
+    data_row_index = 0
+
+    # --- PREENCHIMENTO DA TABELA ---
+    for i, row_data_full in enumerate(dados):
+        tipo = row_data_full[0]
+        row_data = row_data_full[1:] 
+        
+        row = table.add_row()
+        
+        # Aplica altura mínima obrigatória (0.6 cm) a todas as linhas
+        set_row_height_at_least(row, ALTURA_MINIMA_OBRIGATORIA_TWIPS) 
+
+        if tipo == "DATA_ROW":
+            data_row_index += 1
+        
+        for col_idx in range(NUM_COLUNAS):
+            cell = row.cells[col_idx]
+            
+            # Limpa bordas padrão e aplica bordas completas
+            remove_all_borders(cell)
+            set_cell_all_borders(cell)
+
+            set_cell_vertical_alignment(cell, 'center')
+            
+            p = cell.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER # Centraliza o texto
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
+            
+            p.text = row_data[col_idx]
+            run = p.runs[0] 
+            
+            run.font.name = FONTE
+            run.font.size = TAMANHO_FONTE_PADRAO
+            run.font.color.rgb = COR_PRETO_RGB 
+            run.bold = False
+
+            # Lógica de Zebrado (apenas para DATA_ROW)
+            if tipo == "DATA_ROW" and (data_row_index % 2) != 0:
+                shading_elm = OxmlElement('w:shd')
+                shading_elm.set(qn('w:fill'), COR_LINHA_ZEBRADA_HEX)
+                cell._tc.get_or_add_tcPr().append(shading_elm)
+
 
 def aplicar_estilo_capa(paragrafo, texto, tamanho_pt):
     """Aplica o estilo de fonte Bahnschrift com um tamanho específico."""
@@ -1519,11 +1699,48 @@ if __name__ == "__main__":
                         p_format = p.paragraph_format
                         p_format.line_spacing = 1.5
                         p_format.space_after = Pt(8)
+                    
+                    # >>> NOVO PROCESSADOR DE TEXTO COM DESTAQUE <<<
+                    elif bloco['tipo'] == 'TEXTO_DESTAQUE':
+                        p = document.add_paragraph()
+                        run = p.add_run(bloco['texto'])
+                        run.bold = True
+                        run.font.color.rgb = RGBColor(162, 22, 18)
+                        run.font.name = 'Calibri'
+                        run.font.size = Pt(12)
+                        p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                        p_format = p.paragraph_format
+                        p_format.line_spacing = 1.5
+                        p_format.space_after = Pt(8)
 
                         # >>> NOVO PROCESSADOR DE QUEBRA DE PÁGINA AQUI <<<
                     elif bloco['tipo'] == 'QUEBRA_PAGINA':
                         print("--- Inserindo QUEBRA DE PÁGINA forçada ---")
                         document.add_page_break()
+                    
+                    # >>> NOVO PROCESSADOR DE LISTA NUMERADA <<<
+                    elif bloco['tipo'] == 'LISTA_NUMERADA':
+                        print(f"--- Inserindo LISTA NUMERADA com {len(bloco['itens'])} itens ---")
+                        for item_texto in bloco['itens']:
+                            p = document.add_paragraph(item_texto, style='List Number')
+                            p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                            p_format = p.paragraph_format
+                            p_format.line_spacing = 1.0
+                            p_format.space_after = Pt(4)
+                        # Adiciona espaço após a lista
+                        document.paragraphs[-1].paragraph_format.space_after = Pt(12)
+                    
+                    # >>> NOVO PROCESSADOR DE LISTA COM MARCADORES <<<
+                    elif bloco['tipo'] == 'LISTA_MARCADORES':
+                        print(f"--- Inserindo LISTA COM MARCADORES com {len(bloco['itens'])} itens ---")
+                        for item_texto in bloco['itens']:
+                            p = document.add_paragraph(item_texto, style='List Bullet')
+                            p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                            p_format = p.paragraph_format
+                            p_format.line_spacing = 1.5
+                            p_format.space_after = Pt(4)
+                        # Adiciona espaço após a lista
+                        document.paragraphs[-1].paragraph_format.space_after = Pt(12)
                     
                     elif bloco['tipo'] == 'FIGURA':
                         legenda_completa = bloco['legenda_completa']
@@ -1544,7 +1761,7 @@ if __name__ == "__main__":
                             
                             try:
                                 document.add_picture(caminho_imagem_abs, width=Cm(16.5)) 
-                                document.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                                document.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.LEFT
                                 
                             except FileNotFoundError:
                                 print(f"!!! AVISO: Imagem não encontrada em: {caminho_imagem_abs}")
@@ -1627,6 +1844,10 @@ if __name__ == "__main__":
                             document, 
                             bloco['dados'] 
                         )
+                    
+                    elif bloco['tipo'] == 'TABELA_CIDADES':
+                        print(f"--- Inserindo Tabela 12 (Cidades) para {titulo_chave} ---")
+                        adicionar_tabela_cidades(document, bloco['dados'])
                         
     # --- FIM DA SEÇÃO ---
 

@@ -1,0 +1,141 @@
+═══════════════════════════════════════════════════════════════════════════
+GUIA DE USO - MARCADORES DE LISTA NO CONTEUDO_FONTE.DOCX
+═══════════════════════════════════════════════════════════════════════════
+
+✅ IMPLEMENTAÇÃO CONCLUÍDA COM SUCESSO!
+
+Os seguintes marcadores especiais foram adicionados ao gerador:
+
+1. [INICIAR_LISTA_NUMERICA]
+2. [FINALIZAR_LISTA_NUMERICA]
+3. [INICIAR_LISTA_MARCADORES]
+4. [FINALIZAR_LISTA_MARCADORES]
+
+═══════════════════════════════════════════════════════════════════════════
+📋 EXEMPLO 1: LISTA NUMERADA
+═══════════════════════════════════════════════════════════════════════════
+
+No arquivo "Conteudo_Fonte.docx", você pode escrever assim:
+
+    Os objetivos principais deste relatório são:
+    
+    [INICIAR_LISTA_NUMERICA]
+    Apresentar a estrutura organizacional do TJMG
+    Demonstrar os dados históricos de produtividade
+    Analisar o orçamento e sua execução
+    Propor melhorias para o próximo ciclo
+    [FINALIZAR_LISTA_NUMERICA]
+    
+    Esses objetivos foram definidos pela diretoria.
+
+RESULTADO NO DOCUMENTO FINAL:
+
+    Os objetivos principais deste relatório são:
+    
+    1. Apresentar a estrutura organizacional do TJMG
+    2. Demonstrar os dados históricos de produtividade
+    3. Analisar o orçamento e sua execução
+    4. Propor melhorias para o próximo ciclo
+    
+    Esses objetivos foram definidos pela diretoria.
+
+═══════════════════════════════════════════════════════════════════════════
+📋 EXEMPLO 2: LISTA COM MARCADORES
+═══════════════════════════════════════════════════════════════════════════
+
+No arquivo "Conteudo_Fonte.docx", você pode escrever assim:
+
+    O TJMG possui as seguintes características:
+    
+    [INICIAR_LISTA_MARCADORES]
+    Maior tribunal de justiça do Brasil em número de magistrados
+    Atende 853 municípios em todo o estado
+    Possui estrutura de primeira e segunda instância
+    Conta com núcleos especializados de Justiça 4.0
+    [FINALIZAR_LISTA_MARCADORES]
+    
+    Essas características demonstram a magnitude da instituição.
+
+RESULTADO NO DOCUMENTO FINAL:
+
+    O TJMG possui as seguintes características:
+    
+    • Maior tribunal de justiça do Brasil em número de magistrados
+    • Atende 853 municípios em todo o estado
+    • Possui estrutura de primeira e segunda instância
+    • Conta com núcleos especializados de Justiça 4.0
+    
+    Essas características demonstram a magnitude da instituição.
+
+═══════════════════════════════════════════════════════════════════════════
+⚙️ CARACTERÍSTICAS TÉCNICAS
+═══════════════════════════════════════════════════════════════════════════
+
+✅ FORMATAÇÃO APLICADA AUTOMATICAMENTE:
+   - Alinhamento: Justificado
+   - Espaçamento de linha: 1.5
+   - Espaço após cada item: 4pt
+   - Espaço após a lista completa: 12pt
+   - Fonte: Calibri (herda do estilo Normal)
+
+✅ COMPORTAMENTO:
+   - Todos os parágrafos entre [INICIAR_...] e [FINALIZAR_...] são 
+     automaticamente transformados em itens de lista
+   - Os marcadores não aparecem no documento final
+   - Pode haver quantos itens você precisar
+   - Funciona em qualquer seção do documento
+
+✅ ESTILOS USADOS:
+   - Lista Numerada: style='List Number'
+   - Lista com Marcadores: style='List Bullet'
+
+═══════════════════════════════════════════════════════════════════════════
+⚠️ REGRAS IMPORTANTES
+═══════════════════════════════════════════════════════════════════════════
+
+1. Os marcadores devem estar SOZINHOS em uma linha
+2. Sempre use o par INICIAR/FINALIZAR correspondente
+3. Não aninhe listas (uma dentro da outra)
+4. Cada linha entre os marcadores vira um item da lista
+5. Linhas vazias entre os marcadores são ignoradas
+
+═══════════════════════════════════════════════════════════════════════════
+📝 EXEMPLO COMPLETO DE USO NO CONTEUDO_FONTE.DOCX
+═══════════════════════════════════════════════════════════════════════════
+
+2.1 Introdução
+
+Este relatório apresenta informações relevantes sobre o TJMG.
+
+[INICIAR_LISTA_NUMERICA]
+Estrutura organizacional e administrativa
+Dados estatísticos de produtividade judicial
+Informações orçamentárias e financeiras
+Análise de desempenho institucional
+[FINALIZAR_LISTA_NUMERICA]
+
+As principais áreas de atuação incluem:
+
+[INICIAR_LISTA_MARCADORES]
+Primeira Instância
+Segunda Instância
+Núcleos de Justiça 4.0
+Comarcas do interior
+[FINALIZAR_LISTA_MARCADORES]
+
+[INSERIR_TABELA_AREAS]
+
+O detalhamento de cada área será apresentado a seguir.
+
+═══════════════════════════════════════════════════════════════════════════
+✅ TESTES RECOMENDADOS
+═══════════════════════════════════════════════════════════════════════════
+
+1. Adicione os marcadores no seu "Conteudo_Fonte.docx"
+2. Execute o script: python report_generator_test.py
+3. Verifique o documento final em: export/Relatorio_Final_Completo.docx
+4. Confirme que as listas foram criadas corretamente
+
+═══════════════════════════════════════════════════════════════════════════
+FIM DO GUIA
+═══════════════════════════════════════════════════════════════════════════

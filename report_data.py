@@ -313,6 +313,14 @@ dados_tabela_orcamento_2025 = [
     ("TOTAL_ROW", "VALOR TOTAL – UO 4031", "VALOR TOTAL – UO 4031"),
 ]
 
+dados_tabela_cidades = [
+    # Tipo, Col 1, Col 2, Col 3, Col 4
+    ("DATA_ROW", "Brasília de Minas", "Caeté", "Frutal", "Itajubá"),
+    ("DATA_ROW", "João Monlevade", "Manhuaçu", "Mariana", "Monte Carmelo"),
+    ("DATA_ROW", "Montes Claros", "Muriaé", "Nova Serrana", "Ponte Nova"),
+    ("DATA_ROW", "Porteirinha", "Uberaba", "Unaí", "Vazante"),
+]
+
 # --- MAPA DE RECURSOS DE IMAGEM ---
 MAPA_IMAGENS = {
     # Chave: "Legenda" (sem a Fonte)
