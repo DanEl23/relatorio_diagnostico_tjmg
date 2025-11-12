@@ -10,7 +10,7 @@ from docx.oxml.ns import qn
 
 # --- 1. IMPORTAÇÃO DOS DADOS EXTERNOS ---
 try:
-    from report_data import dados_tabela_atos, dados_tabela_areas, dados_tabela_estrutura, dados_tabela_comarcas, dados_tabela_nucleos, dados_tabela_processos, dados_tabela_julgamentos, dados_tabela_acervo, dados_tabela_orcamento, TITULO_TABELA_ORCAMENTO, dados_tabela_orcamento_acao, TITULO_TABELA_ORCAMENTO_ACAO, dados_tabela_orcamento_2025, dados_tabela_cidades, MAPA_IMAGENS
+    from report_data import dados_tabela_atos, dados_tabela_areas, dados_tabela_estrutura, dados_tabela_comarcas, dados_tabela_nucleos, dados_tabela_processos, dados_tabela_julgamentos, dados_tabela_acervo, dados_tabela_orcamento, TITULO_TABELA_ORCAMENTO, dados_tabela_orcamento_acao, TITULO_TABELA_ORCAMENTO_ACAO, dados_tabela_orcamento_2025, dados_tabela_cidades, dados_tabela_justica_numeros, MAPA_IMAGENS
 except ImportError:
     print("!!! ERRO CRÍTICO: Não foi possível encontrar o arquivo 'report_data.py'.")
     print("!!! Certifique-se de que 'report_data.py' está no mesmo diretório.")
@@ -150,8 +150,27 @@ def set_cell_all_borders(cell):
 def remove_all_borders(cell):
     """ Remove todas as bordas da célula (usando XML). """
     tcPr = cell._tc.get_or_add_tcPr()
-    for existing_borders in tcPr.findall(qn('w:tcBorders')):
-        tcPr.remove(existing_borders)
+    tcBorders = tcPr.find(qn('w:tcBorders'))
+    if tcBorders is None:
+        tcBorders = OxmlElement('w:tcBorders')
+        tcPr.append(tcBorders)
+    
+    # Define todas as bordas como 'none'
+    for border_name in ['top', 'bottom', 'left', 'right']:
+        border = tcBorders.find(qn(f'w:{border_name}'))
+        if border is None:
+            border = OxmlElement(f'w:{border_name}')
+            tcBorders.append(border)
+        border.set(qn('w:val'), 'none')
+
+
+def set_cell_width(cell, width_cm):
+    """ Define a largura de uma célula específica em centímetros. """
+    tcPr = cell._tc.get_or_add_tcPr()
+    tcW = OxmlElement('w:tcW')
+    tcW.set(qn('w:w'), str(int(Cm(width_cm).twips)))
+    tcW.set(qn('w:type'), 'dxa')
+    tcPr.append(tcW)
 
 
 def add_page_number(footer):
@@ -431,6 +450,14 @@ def extrair_conteudo_mapeado(caminho_arquivo_docx, pattern_titulo, pattern_legen
                     "tipo": "TABELA_CIDADES", 
                     "dados": dados_tabela_cidades
                 })
+
+             # NOVO GATILHO PARA TABELA 12 (CIDADES)
+            elif texto == "[INSERIR_TABELA_JUSTICA_NUMEROS]":
+                conteudo_mapeado[chave_titulo_atual].append({
+                    "tipo": "TABELA_JUSTICA_NUMEROS", 
+                    "dados": dados_tabela_justica_numeros
+                })
+
   
             else:
                 # Se não é nenhum marcador especial, adiciona como parágrafo normal
@@ -1609,6 +1636,239 @@ def adicionar_tabela_cidades(document, dados):
                 cell._tc.get_or_add_tcPr().append(shading_elm)
 
 
+def adicionar_tabela_justica_numeros(document, dados):
+    """
+    Cria a Tabela 12 - Dados estatísticos do Relatório Justiça em Números.
+    
+    Estrutura:
+    - HEADER_MERGE: Cabeçalho principal (mescla todas colunas)
+    - SUB_HEADER: Linha de anos (2019-2024)
+    - SUB_HEADER_SECONDARY: Linha "Ano Base: ..."
+    - DATA_ROW: Linhas de dados com zebrado alternado
+    """
+    # --- VARIÁVEIS DE COR E ESTILO ---
+    COR_HEADER_PRINCIPAL_HEX = '44546A'    # Azul TJMG (cabeçalho principal)
+    COR_HEADER_ANOS_HEX = 'EEEEEE'         # Cinza claro (linha de anos)
+    COR_LINHA_ZEBRADA_HEX = 'D9D9D9'       # Cinza médio (zebrado)
+    COR_BRANCO_RGB = RGBColor(255, 255, 255)
+    COR_PRETO_RGB = RGBColor(0, 0, 0)
+    
+    TAMANHO_FONTE_PADRAO = Pt(11)
+    FONTE = 'Calibri'
+    NUM_COLUNAS = 7
+    
+    # Altura mínima obrigatória: 0.48 cm = 272 twips
+    ALTURA_MINIMA_TWIPS = 272
+    
+    # --- ESTRUTURA E LARGURA DA TABELA ---
+    table = document.add_table(rows=0, cols=NUM_COLUNAS)
+    
+    # NÃO aplicar nenhum estilo - isso permite controle total das larguras
+    table.style = None
+    
+    # Larguras: Coluna 1 (indicador) mais larga, demais colunas iguais
+    largura_col_indicador = Cm(5.5)
+    largura_col_ano = Cm(2.25)
+    
+    # Obter elemento XML da tabela
+    tbl = table._tbl
+    
+    # Configurar propriedades da tabela
+    tblPr = tbl.tblPr
+    if tblPr is None:
+        tblPr = OxmlElement('w:tblPr')
+        tbl.insert(0, tblPr)
+    
+    # Definir que a tabela NÃO deve auto-ajustar (critical!)
+    tblLayout = OxmlElement('w:tblLayout')
+    tblLayout.set(qn('w:type'), 'fixed')
+    tblPr.append(tblLayout)
+    
+    # Definir largura total da tabela
+    tblW = OxmlElement('w:tblW')
+    largura_total_twips = int(largura_col_indicador.twips + (largura_col_ano.twips * 6))
+    tblW.set(qn('w:w'), str(largura_total_twips))
+    tblW.set(qn('w:type'), 'dxa')
+    tblPr.append(tblW)
+    
+    # Recuo negativo para tabela começar antes da margem esquerda
+    tblInd = OxmlElement('w:tblInd')
+    tblInd.set(qn('w:w'), str(int(Cm(-1.15).twips)))
+    tblInd.set(qn('w:type'), 'dxa')
+    tblPr.append(tblInd)
+    
+    # Forçar larguras via tblGrid (grid da tabela)
+    tblGrid = tbl.find(qn('w:tblGrid'))
+    if tblGrid is not None:
+        tbl.remove(tblGrid)
+    
+    # Criar novo grid com larguras específicas
+    tblGrid = OxmlElement('w:tblGrid')
+    
+    # Coluna 1 (indicador)
+    gridCol = OxmlElement('w:gridCol')
+    gridCol.set(qn('w:w'), str(int(largura_col_indicador.twips)))
+    tblGrid.append(gridCol)
+    
+    # Colunas 2-7 (anos)
+    for _ in range(6):
+        gridCol = OxmlElement('w:gridCol')
+        gridCol.set(qn('w:w'), str(int(largura_col_ano.twips)))
+        tblGrid.append(gridCol)
+    
+    # Inserir grid após tblPr
+    tbl.insert(1, tblGrid)
+    
+    data_row_index = 0
+    
+    # --- PREENCHIMENTO DA TABELA ---
+    for i, row_data_full in enumerate(dados):
+        tipo = row_data_full[0]
+        row_data = row_data_full[1:1 + NUM_COLUNAS]
+        
+        row = table.add_row()
+        
+        # Define altura mínima de 0.48 cm (272 twips) - usa função flexível
+        set_row_height_flexible(row, ALTURA_MINIMA_TWIPS)
+        
+        # Configuração XML da linha
+        tr = row._tr
+        trPr = tr.get_or_add_trPr()
+        
+        # Impedir quebra de linha entre páginas (TODAS as linhas)
+        cantSplit = OxmlElement('w:cantSplit')
+        trPr.append(cantSplit)
+        
+        # SUB_HEADER e SUB_HEADER_SECONDARY devem ser mantidos juntos como cabeçalhos
+        if tipo in ["HEADER_MERGE", "SUB_HEADER", "SUB_HEADER_SECONDARY"]:
+            tblHeader = OxmlElement('w:tblHeader')
+            trPr.append(tblHeader)
+        
+        cells = row.cells
+        
+        # --- TIPO 1: CABEÇALHO PRINCIPAL (Mescla todas as colunas) ---
+        if tipo == "HEADER_MERGE":
+            cell = cells[0].merge(cells[1]).merge(cells[2]).merge(cells[3]).merge(cells[4]).merge(cells[5]).merge(cells[6])
+            cell.text = row_data[0]
+            
+            shading_elm = OxmlElement('w:shd')
+            shading_elm.set(qn('w:fill'), COR_HEADER_PRINCIPAL_HEX)
+            cell._tc.get_or_add_tcPr().append(shading_elm)
+            
+            set_cell_vertical_alignment(cell, 'center')
+            remove_all_borders(cell)  # Remove todas as bordas
+            
+            p = cell.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            
+            p_format = p.paragraph_format
+            p_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
+            p_format.space_before = Pt(0)
+            p_format.space_after = Pt(0)
+            
+            run = p.runs[0]
+            run.font.color.rgb = COR_BRANCO_RGB
+            run.bold = True
+            run.font.name = FONTE
+            run.font.size = Pt(12)
+        
+        # --- TIPO 2 & 3: SUB-CABEÇALHO (Anos de edição e Ano base) ---
+        elif tipo in ["SUB_HEADER", "SUB_HEADER_SECONDARY"]:
+            for j in range(NUM_COLUNAS):
+                cell = cells[j]
+                cell.text = row_data[j]
+                
+                shading_elm = OxmlElement('w:shd')
+                shading_elm.set(qn('w:fill'), COR_HEADER_ANOS_HEX)
+                cell._tc.get_or_add_tcPr().append(shading_elm)
+                
+                set_cell_vertical_alignment(cell, 'center')
+                remove_all_borders(cell)  # Remove todas as bordas
+                
+                # Adicionar borda inferior APENAS no SUB_HEADER_SECONDARY
+                if tipo == "SUB_HEADER_SECONDARY":
+                    tcPr = cell._tc.get_or_add_tcPr()
+                    tcBorders = tcPr.find(qn('w:tcBorders'))
+                    if tcBorders is None:
+                        tcBorders = OxmlElement('w:tcBorders')
+                        tcPr.append(tcBorders)
+                    
+                    # Adicionar borda inferior
+                    bottom = OxmlElement('w:bottom')
+                    bottom.set(qn('w:val'), 'single')
+                    bottom.set(qn('w:sz'), '4')
+                    bottom.set(qn('w:color'), '000000')
+                    tcBorders.append(bottom)
+                
+                p = cell.paragraphs[0]
+                # Primeira coluna: alinhamento à esquerda
+                # Demais colunas: centralizado
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
+                
+                p_format = p.paragraph_format
+                p_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
+                p_format.space_before = Pt(0)
+                p_format.space_after = Pt(0)
+                
+                run = p.runs[0]
+                run.font.color.rgb = COR_PRETO_RGB
+                # SUB_HEADER e SUB_HEADER_SECONDARY ambos em negrito
+                run.bold = True
+                run.font.name = FONTE
+                run.font.size = TAMANHO_FONTE_PADRAO
+        
+        # --- TIPO 4: LINHAS DE DADOS (TODAS com zebrado alternado) ---
+        elif tipo == "DATA_ROW":
+            data_row_index += 1
+            
+            for j in range(NUM_COLUNAS):
+                cell = cells[j]
+                cell.text = row_data[j]
+                
+                set_cell_vertical_alignment(cell, 'center')
+                remove_all_borders(cell)  # Remove todas as bordas
+                
+                p = cell.paragraphs[0]
+                # Primeira coluna: alinhamento à esquerda
+                # Demais colunas: centralizado
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
+                
+                p_format = p.paragraph_format
+                p_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
+                p_format.space_before = Pt(0)
+                p_format.space_after = Pt(0)
+                
+                run = p.runs[0]
+                run.font.name = FONTE
+                run.font.size = TAMANHO_FONTE_PADRAO
+                run.font.color.rgb = COR_PRETO_RGB
+                run.bold = False
+                
+                # Zebrado em TODAS as linhas de dados (linhas ímpares = cinza)
+                if data_row_index % 2 == 1:
+                    shading_elm = OxmlElement('w:shd')
+                    shading_elm.set(qn('w:fill'), COR_LINHA_ZEBRADA_HEX)
+                    cell._tc.get_or_add_tcPr().append(shading_elm)
+    
+    # --- LEGENDA/FONTE ---
+    p_legenda = document.add_paragraph(style='Normal')
+    p_legenda.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p_legenda.paragraph_format.space_before = Pt(6)
+    
+    run_legenda = p_legenda.add_run(
+        "Tabela 12 - Dados estatísticos do Relatório Justiça em Números – Edições 2019 a 2024/CNJ.\n"
+        "Legenda: s/d = Dados não encontrados no Relatório Justiça em Números do Período.\n"
+        "(*) O indicador considera: número de servidores(as) (efetivos(as), requisitados(as), cedidos(as) e "
+        "comissionados(as) sem vínculo efetivo); e número de trabalhadores(as) auxiliares (terceirizados(as), "
+        "estagiários(as), juízes(as) leigos(as) e conciliadores(as)."
+    )
+    run_legenda.bold = False
+    run_legenda.font.name = FONTE
+    run_legenda.font.size = Pt(8)
+    
+    p_legenda.paragraph_format.space_after = Pt(30)
+
+
 def aplicar_estilo_capa(paragrafo, texto, tamanho_pt):
     """Aplica o estilo de fonte Bahnschrift com um tamanho específico."""
     paragrafo.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1787,8 +2047,23 @@ if __name__ == "__main__":
                             texto_fonte = f"Fonte: {partes[1].strip()}"
                         else:
                             texto_fonte = ""
+                        
+                        # Verificar se é Gráfico ou Figura
+                        eh_grafico = legenda_chave.startswith("Gráfico")
+                        tipo_imagem = "GRÁFICO" if eh_grafico else "FIGURA"
 
-                        print(f"--- Processando FIGURA: {legenda_chave}")
+                        print(f"--- Processando {tipo_imagem}: {legenda_chave}")
+                        
+                        # Se for gráfico, adicionar título acima
+                        if eh_grafico:
+                            p_titulo = document.add_paragraph()
+                            run_titulo = p_titulo.add_run(legenda_chave)
+                            run_titulo.font.name = 'Calibri'
+                            run_titulo.font.size = Pt(11)
+                            run_titulo.bold = True
+                            p_titulo.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                            p_titulo.paragraph_format.space_before = Pt(12)
+                            p_titulo.paragraph_format.space_after = Pt(6)
                         
                         if legenda_chave in MAPA_IMAGENS:
                             # Suporta dois formatos: string simples ou dicionário com configurações
@@ -1818,14 +2093,17 @@ if __name__ == "__main__":
                             print(f"!!! AVISO: Legenda '{legenda_chave}' não encontrada no MAPA_IMAGENS.")
                             document.add_paragraph(f"[ERRO: MAPEAMENTO DE IMAGEM AUSENTE PARA: {legenda_chave}]")
 
-                        p_legenda = document.add_paragraph()
-                        run_legenda = p_legenda.add_run(legenda_chave)
-                        run_legenda.font.name = 'Calibri'
-                        run_legenda.font.size = Pt(8) 
-                        run_legenda.bold = False 
-                        p_legenda.alignment = WD_ALIGN_PARAGRAPH.LEFT 
-                        p_legenda.paragraph_format.space_before = Pt(6) 
-                        p_legenda.paragraph_format.space_after = Pt(0) 
+                        # Para figuras, adicionar legenda abaixo
+                        # Para gráficos, não adicionar legenda (já tem título acima)
+                        if not eh_grafico:
+                            p_legenda = document.add_paragraph()
+                            run_legenda = p_legenda.add_run(legenda_chave)
+                            run_legenda.font.name = 'Calibri'
+                            run_legenda.font.size = Pt(8) 
+                            run_legenda.bold = False 
+                            p_legenda.alignment = WD_ALIGN_PARAGRAPH.LEFT 
+                            p_legenda.paragraph_format.space_before = Pt(6) 
+                            p_legenda.paragraph_format.space_after = Pt(0)
 
                         if texto_fonte:
                             p_fonte = document.add_paragraph()
@@ -1893,6 +2171,10 @@ if __name__ == "__main__":
                     elif bloco['tipo'] == 'TABELA_CIDADES':
                         print(f"--- Inserindo Tabela 12 (Cidades) para {titulo_chave} ---")
                         adicionar_tabela_cidades(document, bloco['dados'])
+
+                    elif bloco['tipo'] == 'TABELA_JUSTICA_NUMEROS':
+                        print(f"--- Inserindo Tabela 13 (Justiça em Números) para {titulo_chave} ---")
+                        adicionar_tabela_justica_numeros(document, bloco['dados'])
                         
     # --- FIM DA SEÇÃO ---
 

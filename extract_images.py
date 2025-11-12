@@ -43,6 +43,7 @@ def extract_figures_by_metadata(pdf_path: str, output_dir: str):
     os.makedirs(output_dir, exist_ok=True)
     extracted_count = 0
     
+    # Regex para capturar "Figura" no documento
     LEGEND_REGEX = r"(?i)\b(Figura\s+\d+\.?|Fig\.\s*\d+\.?)(.*)"
     
     for page_num in range(len(doc)):
@@ -101,6 +102,10 @@ def extract_figures_by_metadata(pdf_path: str, output_dir: str):
                         
                         label = match.group(1).strip()
                         title = match.group(2).strip()
+                        
+                        # Substituir "Figura" por "Gráfico" no nome de salvamento
+                        label = label.replace("Figura", "Gráfico").replace("figura", "Gráfico").replace("Fig.", "Graf.")
+                        
                         fig_name_raw = f"{label} {title}"
                         fig_name = re.sub(r'[\\/:*?"<>|.]', '', fig_name_raw)[:80].strip()
                         

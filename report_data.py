@@ -321,6 +321,96 @@ dados_tabela_cidades = [
     ("DATA_ROW", "Porteirinha", "Uberaba", "Unaí", "Vazante"),
 ]
 
+# report_data.py
+
+# ... (outros dicionários de dados) ...
+
+# --- 13. DADOS TABELA 12 (RELATÓRIO JUSTIÇA EM NÚMEROS - CNJ) ---
+dados_tabela_justica_numeros = [
+    # Tipo, Col 1, Col 2, Col 3, Col 4, Col 5, Col 6, Col 7
+    ("HEADER_MERGE", "RELATÓRIO JUSTIÇA EM NÚMEROS (CNJ) | DADOS ANUAIS DO TJMG", "", "", "", "", "", ""),
+    ("SUB_HEADER", "Ano de edição do relatório", "2019", "2020", "2021", "2022", "2023", "2024"),
+    ("SUB_HEADER_SECONDARY", "Ano base", "2018", "2019", "2020", "2021", "2022", "2023"),
+    
+    # ---------------------------------------------------------------------------------------
+    # DADOS ESTATÍSTICOS GERAIS
+    # ---------------------------------------------------------------------------------------
+    ("DATA_ROW", "Nº de municípios-sede", "296", "296", "297", "297", "298", "298"),
+    ("DATA_ROW", "Percentual da população em munícipios-sede", "81,6%", "81,6%", "81,6%", "81,6%", "82%", "82%"),
+    ("DATA_ROW", "Nº de unidades judiciárias (Estrutura de 1º grau)", "848", "861", "870", "778", "896", "962"),
+    ("DATA_ROW", "Classificação do TJMG dentro do Grupo ‘Grande Porte’", "3º lugar", "3º lugar", "2º lugar", "3º lugar", "2º lugar", "2º lugar"),
+    ("DATA_ROW", "Nº de magistrados", "1.030", "1.083", "1.085", "1.065", "1.044", "1.022"),
+    ("DATA_ROW", "Força de trabalho (servidores e auxiliares) (*)", "27.847", "28.037", "27.334", "24.221", "32.887", "32.695"),
+    ("DATA_ROW", "Despesa total da justiça (Bilhões)", "5.098.319.857", "5.790.909.062", "6.396.561.674", "6.735.890.808", "8.108.940.000", "9.634.461.461"),
+    ("DATA_ROW", "Despesa total por habitante, incluindo custo com inativos (Reais)", "242,3", "273,6", "300,4", "314,6", "376,1", "469,1"),
+    ("DATA_ROW", "Custo médio mensal com magistrados (Milhões)", "40.541", "63.158", "70.997", "78.596", "170.287", "84.349"),
+    ("DATA_ROW", "Custo médio mensal com servidores (Milhões)", "14.462", "16.229", "17.810", "19.117", "45.416", "27.454"),
+    ("DATA_ROW", "Percentual de cargos vagos de magistrados", "37,6%", "34,4%", "34,2%", "35,5%", "36,7%", "38,10%"),
+    ("DATA_ROW", "Percentual de servidores lotados na área administrativa", "s/d", "9%", "10%", "10%", "10%", "9%"),
+    ("DATA_ROW", "Casos novos", "1.717.862", "1.649.250", "1.428.480", "1.478.922", "1.724.611", "6.863.658"),
+    ("DATA_ROW", "Casos pendentes", "3.942.814", "3.772.400", "3.940.277", "4.369.191", "4.271.123", "4.041.123"),
+    ("DATA_ROW", "Casos novos por 100 mil habitantes", "7.187", "7.027", "6.133", "6.265", "7.303", "8.786"),
+    ("DATA_ROW", "Índice de produtividade dos magistrados", "1.984", "2.019", "1.471", "1.500", "1.885", "1.400"),
+    ("DATA_ROW", "Índice de produtividade de servidores da área judiciária", "150", "154", "118", "124", "152", "109"),
+    ("DATA_ROW", "Percentual de servidores (as) na área judiciária de primeiro grau", "s/d", "88%", "88%", "88%", "88%", "87%"),
+    ("DATA_ROW", "Índice de atendimento à demanda (Geral)", "110,6%", "116,5%", "103,6%", "101,8%", "106,9%", "91%"),
+    ("DATA_ROW", "Percentual de casos novos eletrônicos", "39,5%", "64,5%", "83,7%", "84,2%", "96,5%", "98,40%"),
+    ("DATA_ROW", "Percentual de unidades judiciárias de primeiro grau com Juízo 100% Digital", "s/d", "s/d", "12%", "47,8%", "99,1%", "92,20%"),
+    ("DATA_ROW", "Quantidade de Núcleos de Justiça 4.0", "s/d", "s/d", "s/d", "2", "5", "9"),
+    ("DATA_ROW", "Quantidade de Balcões Virtuais instalados", "s/d", "s/d", "s/d", "s/d", "1.421", "1.485"),
+    ("DATA_ROW", "Casos novos por magistrados - 1º grau", "1.550", "1.556", "1.274", "1.308", "1.649", "1.848"),
+    ("DATA_ROW", "Casos novos por magistrados - 2º grau", "1.760", "1.602", "1.448", "1.502", "1.388", "2.106"),
+    ("DATA_ROW", "Casos novos por servidor da área judiciária – 1º grau", "115", "116", "100", "105", "129", "144"),
+    ("DATA_ROW", "Casos novos por servidor da área judiciária – 2º grau", "152", "145", "136", "149", "135", "196"),
+    ("DATA_ROW", "Carga de trabalho do magistrado – 1º grau", "6.637", "6.583", "3.867", "6.552", "7.040", "6.817"),
+    ("DATA_ROW", "Carga de trabalho do magistrado – 2º grau", "4.360", "4.169", "3.891", "3.867", "3.099", "3.898"),
+    ("DATA_ROW", "Carga de trabalho do servidor da área judiciária – 1º grau", "492", "490", "462", "527", "551", "531"),
+    ("DATA_ROW", "Carga de trabalho do servidor da área judiciária – 2º grau", "376", "376", "364", "383", "300", "363"),
+    ("DATA_ROW", "Índice de produtividade dos magistrados – 1º grau", "2.045", "2.079", "1.503", "1.498", "1.966", "1.936"),
+    ("DATA_ROW", "Índice de produtividade dos magistrados – 2º grau", "1.590", "1.669", "1.271", "1.509", "1.421", "1.740"),
+    ("DATA_ROW", "Índice de produtividade dos servidores da área judiciária – 1º grau", "151", "155", "117", "121", "154", "151"),
+    ("DATA_ROW", "Índice de produtividade dos servidores da área judiciária – 2º grau", "137", "151", "119", "149", "138", "162"),
+    ("DATA_ROW", "Índice de casos novos eletrônicos", "s/d", "s/d", "83,7%", "84,2%", "96,5%", "98,40%"),
+    ("DATA_ROW", "Índice de casos novos eletrônicos – 1º grau", "42%", "66%", "85%", "85%", "97%", "98,00%"),
+    ("DATA_ROW", "Índice de casos novos eletrônicos – 2º grau", "28%", "53%", "78%", "83%", "91%", "98,00%"),
+    ("DATA_ROW", "Índice de atendimento à demanda – 1º grau", "114%", "118%", "106%", "102%", "107%", "87,00%"),
+    ("DATA_ROW", "Índice de atendimento à demanda – 2º grau", "90%", "104%", "88%", "100%", "102%", "83,00%"),
+    ("DATA_ROW", "Taxa de congestionamento Total", "67,5%", "64,4%", "72,7%", "70,8%", "66,5%", "68,90%"),
+    ("DATA_ROW", "Taxa de congestionamento líquida", "65,5%", "66,2%", "70,8%", "74,4%", "69,9%", "66,60%"),
+    ("DATA_ROW", "Taxa de congestionamento – 1º grau", "68%", "68%", "74%", "76%", "71%", "71%"),
+    ("DATA_ROW", "Taxa de congestionamento – 2º grau", "58%", "53%", "62%", "54%", "52%", "53%"),
+    ("DATA_ROW", "Taxa de congestionamento na fase de conhecimento", "66%", "66%", "72%", "74%", "68%", "78%"),
+    ("DATA_ROW", "Taxa de congestionamento na fase de execução", "75%", "72%", "79%", "84%", "81%", "67%"),
+    ("DATA_ROW", "Índice de recorribilidade interna (Geral)", "9,9%", "9,6%", "12,2%", "12,7%", "s/d", "s/d"),
+    ("DATA_ROW", "Índice de recorribilidade externa (Geral)", "7,7%", "7%", "3,8%", "3,6%", "s/d", "s/d"),
+    ("DATA_ROW", "Recorribilidade interna – 1º grau (Conhecimento)", "8,2%", "7,9%", "10,7%", "11,2%", "9,5%", "9,5%"),
+    ("DATA_ROW", "Recorribilidade interna – 2º grau (**)", "17,9%", "18,7%", "18,7%", "18,3%", "5,3%", "7%"),
+    ("DATA_ROW", "Recorribilidade externa – 1º grau (Conhecimento)", "7%", "6%", "3%", "2%", "17,5%", "16,3%"),
+    ("DATA_ROW", "Recorribilidade externa – 2º grau (**)", "23%", "22%", "17%", "23%", "0,0%", "0,0%"),
+    ("DATA_ROW", "Percentual de casos pendentes de execução em relação ao estoque total de processos", "32,7%", "31,6%", "27,8%", "31,4%", "30,8%", "32,7%"),
+    ("DATA_ROW", "Total de execuções fiscais pendentes", "463.524", "423.882", "407.160", "451.845", "396.967", "279.866"),
+    ("DATA_ROW", "Taxa de congestionamento na execução fiscal", "74%", "78%", "83%", "86%", "85%", "82%"),
+    ("DATA_ROW", "Centros judiciários de solução de conflitos na justiça estadual", "143", "166", "212", "285", "299", "298"),
+    ("DATA_ROW", "Índice de conciliação", "19,2%", "16,1%", "13,0%", "12,5%", "14,1%", "13,8%"),
+    ("DATA_ROW", "Índice de conciliação, 1º grau", "21,2%", "17,7%", "14,5%", "14,3%", "15,5%", "20,8%"),
+    ("DATA_ROW", "Índice de conciliação 2º grau", "0,2%", " 0,2%", "0,2%", "0,5%", "0%", "0,3%"),
+    ("DATA_ROW", "Tempo médio até a sentença no 1º grau", "3a e 4m", "3a e 4m", "3a", "2a e 3m", "2a e 3m", "2a e 5m"),
+    ("DATA_ROW", "Tempo médio até a sentença no 2º grau", "5m", "8m", "7m", "7m", "5m", "10m"),
+    ("DATA_ROW", "Tempo de giro do acervo", "s/d", "2a", "2a e 8m", "2a e 11m", "2a e 4m", "2a e 3m"),
+    ("DATA_ROW", "Tempo médio dos processos físicos pendentes", "s/d", "s/d", "s/d", "s/d", "5a e 11m", "7a e 2m"),
+    ("DATA_ROW", "Tempo médio dos processos eletrônicos pendentes", "s/d", "s/d", "s/d", "s/d", "2a e 10m", "1a e 11m"),
+    ("DATA_ROW", "Casos novos criminais, excluídas as execuções penais", "245.327", "257.645", "211.165", "227.906", "355.278", "411.313"),
+    ("DATA_ROW", "Casos pendentes criminais, excluídas as execuções penais", "500.658", "494.353", "524.809", "566.635", "766.828", "627.406"),
+    ("DATA_ROW", "Resultado do IPC-Jus total por tribunal (incluída a área administrativa)", "82%", "74%", "77%", "80%", "86%", "61%"),
+    ("DATA_ROW", "Resultado do IPC-Jus da área judiciária, por instância e tribunal. 1º grau", "79%", "68%", "73%", "75%", "84%", "56%"),
+    ("DATA_ROW", "Resultado do IPC-Jus da área judiciária, por instância e tribunal. 2º grau ", "77%", "83%", "72%", "62%", "68%", "77%"),
+    
+    # Linhas Complexas com 2 Valores por Ano (Realizado X Necessário/Consequência)
+    ("DATA_ROW", "Índice de produtividade dos magistrados (IPM) realizado x necessário para que tribunal atinja IPC-Jus de 100%.", "1.984, 2.384", "2.019, 2.640", "1.471, 1.889", "1.500, 1.853", "1.885, 2.179", "1.906, 3.068"),
+    ("DATA_ROW", "Índice de produtividade dos servidores (IPS) realizado x necessário para que tribunal atinja IPC-Jus de 100%.", "124, 149", "127, 166", "99, 127", "104, 128", "123, 143", "126, 203"),
+    ("DATA_ROW", "Taxa de congestionamento líquida (TCL) realizado x resultado da consequência se tribunal atingisse IPC-Jus 100%. TCL realizado", "61%, 66%", "58%, 64%", "65%, 71%", "66%, 71%", "64%, 66%", "67%, 56%"),
+]
+
 # --- MAPA DE RECURSOS DE IMAGEM ---
 MAPA_IMAGENS = {
     # Chave: "Legenda" (sem a Fonte)
