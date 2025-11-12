@@ -17,11 +17,12 @@ except ImportError:
     exit()
 
 # --- 2. DEFINIÇÃO DAS EXPRESSÕES REGULARES ---
-PATTERN_SUMARIO = r'^\s*(\d+(?:\.\d+)*)\.?\s+(.*?)\s*[\. ]*\d+$' 
-# Pattern atualizado: exige pelo menos um ponto na sequência (ex: 8.10, 3.9.1)
-# Cada segmento após o ponto deve ter no máximo 2 dígitos
-# Não aceita apenas números sem ponto (ex: 810) ou com mais de 2 dígitos após o ponto (ex: 3.123)
-PATTERN_CONTEUDO = r'^\s*(\d+(?:\.\d{1,2})+)\.?\s+(.*)$'
+# Pattern para sumário: captura número COM ponto incluído (se houver)
+PATTERN_SUMARIO = r'^\s*(\d+(?:\.\d+)*\.?)\s+(.+?)(?:\s*\.{2,}\s*\d+\s*)?$'
+# Pattern atualizado: captura o número COM ponto opcional no final
+# Para títulos de nível 1: "1." captura "1."
+# Para subtítulos: "3.10" captura "3.10" (sem ponto final adicional)
+PATTERN_CONTEUDO = r'^\s*(\d+(?:\.\d{1,2})*\.?)\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ].*)$'
 PATTERN_LEGENDA = r'^(Figura|Gráfico)\s+\d+' 
 
 # --- 3. DADOS BRUTOS (HARDCODED) ---
@@ -305,6 +306,29 @@ def extrair_conteudo_mapeado(caminho_arquivo_docx, pattern_titulo, pattern_legen
         if match_titulo:
             prefixo = match_titulo.group(1).strip()
             titulo = match_titulo.group(2).strip()
+            
+            # Validação de título válido:
+            # DEVE ter pelo menos um ponto (seja "1." ou "3.10")
+            if '.' not in prefixo:
+                # SEM ponto = parágrafo (ex: 436, 810)
+                if chave_titulo_atual:
+                    conteudo_mapeado[chave_titulo_atual].append({
+                        "tipo": "PARAGRAFO",
+                        "texto": texto
+                    })
+                continue
+            
+            # Verifica se os segmentos têm no máximo 2 dígitos
+            segmentos = prefixo.replace('.', ' ').split()  # Remove pontos e divide
+            if any(len(seg) > 2 for seg in segmentos):
+                # Número como 3.123 ou 1.436 - trata como parágrafo
+                if chave_titulo_atual:
+                    conteudo_mapeado[chave_titulo_atual].append({
+                        "tipo": "PARAGRAFO",
+                        "texto": texto
+                    })
+                continue
+            
             chave_titulo_atual = f"{prefixo} {titulo}" 
             conteudo_mapeado[chave_titulo_atual] = []
             
@@ -416,6 +440,10 @@ def extrair_conteudo_mapeado(caminho_arquivo_docx, pattern_titulo, pattern_legen
                 })
 
     print(f"Extração de conteúdo concluída. {len(conteudo_mapeado)} títulos mapeados.")
+    print("=== DEBUG: Chaves criadas no conteudo_mapeado ===")
+    for chave in sorted(conteudo_mapeado.keys()):
+        print(f"  '{chave}' -> {len(conteudo_mapeado[chave])} blocos")
+    print("=" * 50)
     return conteudo_mapeado
 
 
@@ -1668,12 +1696,19 @@ if __name__ == "__main__":
 
     # --- SEÇÃO: CORPO DO DOCUMENTO (COM PROCESSADOR DE CONTEÚDO) ---
     print("Gerando corpo do relatório com títulos e conteúdo...")
+    print("=== DEBUG: Verificando correspondência de chaves ===")
 
     for elemento in estrutura_final:
         if elemento['tipo'] == 'TITULO':
             
             texto_chave = elemento['texto'] 
             level = elemento['level']
+            
+            print(f"\nBuscando conteúdo para: '{texto_chave}'")
+            if texto_chave in conteudo_mapeado:
+                print(f"  ✓ ENCONTRADO: {len(conteudo_mapeado[texto_chave])} blocos")
+            else:
+                print(f"  ✗ NÃO ENCONTRADO no conteudo_mapeado")
             
             if level == 1:
                 texto_para_imprimir = texto_chave.replace(" ", ". ", 1)
@@ -1756,12 +1791,22 @@ if __name__ == "__main__":
                         print(f"--- Processando FIGURA: {legenda_chave}")
                         
                         if legenda_chave in MAPA_IMAGENS:
-                            caminho_imagem_relativo = MAPA_IMAGENS[legenda_chave]
+                            # Suporta dois formatos: string simples ou dicionário com configurações
+                            imagem_info = MAPA_IMAGENS[legenda_chave]
+                            
+                            if isinstance(imagem_info, dict):
+                                caminho_imagem_relativo = imagem_info.get("caminho")
+                                largura_cm = imagem_info.get("width", 16.5)  # Padrão: 16.5 cm
+                            else:
+                                # Formato antigo (string simples)
+                                caminho_imagem_relativo = imagem_info
+                                largura_cm = 16.5  # Padrão: 16.5 cm
+                            
                             caminho_imagem_abs = os.path.join(SCRIPT_DIR, caminho_imagem_relativo)
                             
                             try:
-                                document.add_picture(caminho_imagem_abs, width=Cm(16.5)) 
-                                document.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.LEFT
+                                document.add_picture(caminho_imagem_abs, width=Cm(largura_cm)) 
+                                document.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
                                 
                             except FileNotFoundError:
                                 print(f"!!! AVISO: Imagem não encontrada em: {caminho_imagem_abs}")
