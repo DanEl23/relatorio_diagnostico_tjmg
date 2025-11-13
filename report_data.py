@@ -417,23 +417,23 @@ MAPA_IMAGENS = {
     # Valor: Pode ser uma string "caminho/relativo/do_arquivo.png" (usa largura padrão 16.5 cm)
     #        ou um dicionário {"caminho": "path", "width": 14.0} (largura personalizada em cm)
     
-    "Figura 01 - Informações sobre o Estado de Minas Gerais.": {"caminho": "canvas_images/figura_01.png", "width": 19.3},
+    "Figura 01 - Informações sobre o Estado de Minas Gerais.": {"caminho": "canvas_images/figura_01.png", "width": 19.3, "indent": -1.5},
     "Figura 02 - Síntese da estrutura na área fim.": {"caminho": "canvas_images/figura_02.png", "width": 15.26},
     "Figura 03 - Novas estruturas na área fim.": {"caminho": "canvas_images/figura_03.png", "width": 16.2},
     "Figura 04 - Força de Trabalho.": {"caminho": "canvas_images/figura_04.png", "width": 15.98},
     "Figura 05 - Colaboradores da Justiça.": {"caminho": "canvas_images/figura_05.png", "width": 16.79},
     "Figura 06 – Força de Trabalho e Colaboradores na área de TI.": {"caminho": "canvas_images/figura_06.png", "width": 17.03},
-    "Figura 07 - Instalações prediais do TJMG.": {"caminho": "canvas_images/figura_07.png", "width": 17.4},
-    "Figura 08 - Desempenho da ação por programa (Unidade 1031).": {"caminho": "canvas_images/figura_08.png", "width": 18.58},
-    "Figura 09 - Desempenho da ação por programa (Unidade 4031).": {"caminho": "canvas_images/figura_09.png", "width": 18.81},
-    "Figura 10 - Esquema do Plano Estratégico 2024.": {"caminho": "canvas_images/figura_10.png", "width": 17.26},
+    "Figura 07 - Instalações prediais do TJMG.": {"caminho": "canvas_images/figura_07.png", "width": 17.4, "indent": -1.5},
+    "Figura 08 - Desempenho da ação por programa (Unidade 1031).": {"caminho": "canvas_images/figura_08.png", "width": 18.58, "indent": -1.5},
+    "Figura 09 - Desempenho da ação por programa (Unidade 4031).": {"caminho": "canvas_images/figura_09.png", "width": 18.81, "indent": -1.5},
+    "Figura 10 - Esquema do Plano Estratégico 2024.": {"caminho": "canvas_images/figura_10.png", "width": 17.26, "indent": -1.0},
     "Figura 11 - Identidade organizacional do TJMG/DIRCOM": {"caminho": "canvas_images/figura_11.png", "width": 12.77},
     "Figura 12 - Mapa Estratégico do TJMG/ DIRCOM": {"caminho": "canvas_images/figura_12.png", "width": 11.18},
     "Figura 13 - ODS/ONU -": {"caminho": "canvas_images/figura_13.png", "width": 16.0},
     "Figura 14 - Modelo de gestão de prioridades do TJMG/ASPLAG": {"caminho": "canvas_images/figura_14.png", "width": 16.66},
     "Figura 15 - Composição da Matriz de Priorização do TJMG/ ASPLAG.": {"caminho": "canvas_images/figura_15.png", "width": 16.67},
     "Figura 16 - Grupos de interesse do TJMG.": {"caminho": "canvas_images/figura_16.png", "width": 12.21},
-    "Figura 17 - Estatística 2024 de atendimentos Ouvidoria – Painel Estatística SIC Portal TJMG": {"caminho": "canvas_images/figura_17.png", "width": 18.31}
+    "Figura 17 - Estatística 2024 de atendimentos Ouvidoria – Painel Estatística SIC Portal TJMG": {"caminho": "canvas_images/figura_17.png", "width": 17.6, "indent": -0.5}
     # Adicionar outras figuras/gráficos aqui
     # "Gráfico 01 - ...": {"caminho": "resources/grafico_01.png", "width": 14.0},
 }

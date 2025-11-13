@@ -1,0 +1,233 @@
+{
+    "Gráfico 1": {
+        "grafico_original": "Gráfico 78",
+        "arquivo_encontrado": "Gráfico 78 - Taxa de congestionamento total e líquida, por tribunal._Pg162_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 78 - Taxa de congestionamento total e líquida, por tribunal._Pg162_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 2": {
+        "grafico_original": "Gráfico 61",
+        "arquivo_encontrado": "Gráfico 61 - Tempo de giro do acervo, por tribunal_Pg143_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 61 - Tempo de giro do acervo, por tribunal_Pg143_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 3": {
+        "grafico_original": "Gráfico 104",
+        "arquivo_encontrado": "Gráfico 104 - Percentual de casos pendentes de execução em relação ao estoque to_Pg192_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 104 - Percentual de casos pendentes de execução em relação ao estoque to_Pg192_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 4": {
+        "grafico_original": "Gráfico 114",
+        "arquivo_encontrado": "Gráfico 114 - Total de execuções fiscais pendentes, por tribunal._Pg207_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 114 - Total de execuções fiscais pendentes, por tribunal._Pg207_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 5": {
+        "grafico_original": "Gráfico 120",
+        "arquivo_encontrado": "Gráfico 120 - Tempo de tramitação do processo baixado na execução fiscal, por tr_Pg213_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 120 - Tempo de tramitação do processo baixado na execução fiscal, por tr_Pg213_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 6": {
+        "grafico_original": "Gráfico 136",
+        "arquivo_encontrado": "Gráfico 136 - Tempo médio dos processos eletrônicos e físicos pendentes, por tri_Pg245_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 136 - Tempo médio dos processos eletrônicos e físicos pendentes, por tri_Pg245_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 7": {
+        "grafico_original": "Gráfico 125",
+        "arquivo_encontrado": "Gráfico 125 - Quantidade de Balcões Virtuais instalados_Pg225_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 125 - Quantidade de Balcões Virtuais instalados_Pg225_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 8": {
+        "grafico_original": "Gráfico 141",
+        "arquivo_encontrado": "Gráfico 141 - Centros Judiciários de Solução de Conflitos, por tribunal_Pg254_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 141 - Centros Judiciários de Solução de Conflitos, por tribunal_Pg254_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 9": {
+        "grafico_original": "Gráfico 33",
+        "arquivo_encontrado": "Gráfico 33 - Custo médio mensal dos tribunais com magistrados(as) e servidores(a_Pg97_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 33 - Custo médio mensal dos tribunais com magistrados(as) e servidores(a_Pg97_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 10": {
+        "grafico_original": "Gráfico 38",
+        "arquivo_encontrado": "Gráfico 38 - Percentual de cargos vagos de Magistrado(a), por tribunal_Pg102_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 38 - Percentual de cargos vagos de Magistrado(a), por tribunal_Pg102_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 11": {
+        "grafico_original": "Gráfico 46",
+        "arquivo_encontrado": "Gráfico 46 - Percentual de Magistrados(as) no Poder Judiciário_Pg110_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 46 - Percentual de Magistrados(as) no Poder Judiciário_Pg110_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 12": {
+        "grafico_original": "Gráfico 50",
+        "arquivo_encontrado": "Gráfico 50 - Percentual de Magistrados(as) negros(as) no Poder Judiciário_Pg121_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 50 - Percentual de Magistrados(as) negros(as) no Poder Judiciário_Pg121_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 13": {
+        "grafico_original": "Gráfico 71",
+        "arquivo_encontrado": "Gráfico 71 - Índice de produtividade dos(as) magistrados(as), por tribunal._Pg153_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 71 - Índice de produtividade dos(as) magistrados(as), por tribunal._Pg153_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 14": {
+        "grafico_original": "Gráfico 75",
+        "arquivo_encontrado": "Gráfico 75 - Índice de produtividade dos(as) servidores(as) da área judiciária,_Pg157_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 75 - Índice de produtividade dos(as) servidores(as) da área judiciária,_Pg157_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 15": {
+        "grafico_original": "Gráfico 79",
+        "arquivo_encontrado": "Gráfico 79 - Índice de Atendimento à Demanda, por tribunal._Pg163_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 79 - Índice de Atendimento à Demanda, por tribunal._Pg163_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 16": {
+        "grafico_original": "Gráfico 189",
+        "arquivo_encontrado": "Gráfico 189 - Resultado do IPC-Jus por tribunal (incluída a área administrativa)_Pg326_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 189 - Resultado do IPC-Jus por tribunal (incluída a área administrativa)_Pg326_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 17": {
+        "grafico_original": "Gráfico 190",
+        "arquivo_encontrado": "Gráfico 190 - Resultado do IPC-Jus da área judiciária, por instância e tribunal_Pg327_FINAL.png",
+        "caminho_completo": "graficos_extraidos_por_titulo\\Gráfico 190 - Resultado do IPC-Jus da área judiciária, por instância e tribunal_Pg327_FINAL.png",
+        "status": "encontrado",
+        "similaridade": 1.0
+    },
+    "Gráfico 18": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 19": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 20": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 21": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 22": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 23": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 24": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 25": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 26": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 27": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 28": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 29": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 30": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 31": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 32": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    },
+    "Gráfico 33": {
+        "grafico_original": "Gráfico ",
+        "arquivo_encontrado": null,
+        "caminho_completo": null,
+        "status": "numero_invalido",
+        "similaridade": null
+    }
+}

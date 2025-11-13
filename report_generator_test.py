@@ -25,7 +25,105 @@ PATTERN_SUMARIO = r'^\s*(\d+(?:\.\d+)*\.?)\s+(.+?)(?:\s*\.{2,}\s*\d+\s*)?$'
 PATTERN_CONTEUDO = r'^\s*(\d+(?:\.\d{1,2})*\.?)\s+([A-ZÁÀÂÃÉÊÍÓÔÕÚÇ].*)$'
 PATTERN_LEGENDA = r'^(Figura|Gráfico)\s+\d+' 
 
-# --- 3. DADOS BRUTOS (HARDCODED) ---
+# --- 3. CARREGAR MAPEAMENTO DE GRÁFICOS ---
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+MAPEAMENTO_GRAFICOS_PATH = os.path.join(SCRIPT_DIR, "mapeamento_graficos_completo.json")
+MAPEAMENTO_GRAFICOS = {}
+
+try:
+    if os.path.exists(MAPEAMENTO_GRAFICOS_PATH):
+        with open(MAPEAMENTO_GRAFICOS_PATH, 'r', encoding='utf-8') as f:
+            MAPEAMENTO_GRAFICOS = json.load(f)
+        print(f"✅ Mapeamento de gráficos carregado: {len(MAPEAMENTO_GRAFICOS)} entradas")
+    else:
+        print(f"⚠️  AVISO: Arquivo de mapeamento não encontrado: {MAPEAMENTO_GRAFICOS_PATH}")
+        print("⚠️  Os gráficos serão buscados apenas no MAPA_IMAGENS do report_data.py")
+except Exception as e:
+    print(f"⚠️  ERRO ao carregar mapeamento de gráficos: {e}")
+    print("⚠️  Os gráficos serão buscados apenas no MAPA_IMAGENS do report_data.py")
+
+def buscar_caminho_grafico(legenda_chave):
+    """
+    Busca o caminho completo de um gráfico usando o mapeamento automático.
+    
+    Fluxo:
+    1. Recebe legenda completa do Conteudo_Fonte.docx (ex: "Gráfico 11 - Percentual de...")
+    2. Extrai apenas "Gráfico X" da legenda
+    3. Consulta dicionario_graficos.json para encontrar o gráfico original (ex: "Gráfico 78")
+    4. Busca o arquivo extraído correspondente ao gráfico original
+    
+    Args:
+        legenda_chave (str): Legenda completa ou simples (ex: "Gráfico 11 - Título..." ou "Gráfico 11")
+    
+    Returns:
+        str or None: Caminho absoluto do arquivo ou None se não encontrado
+    """
+    # Extrair apenas "Gráfico X" da legenda completa e normalizar o número
+    # Ex: "Gráfico 01 - Percentual de..." → "Gráfico 1"
+    # Ex: "Gráfico 11 - Percentual de..." → "Gráfico 11"
+    match = re.match(r'^Gráfico\s+(\d+)', legenda_chave, re.IGNORECASE)
+    if match:
+        numero = int(match.group(1))  # Converte para int para remover zeros à esquerda
+        grafico_simples = f"Gráfico {numero}"
+    else:
+        grafico_simples = legenda_chave
+    
+    if grafico_simples in MAPEAMENTO_GRAFICOS:
+        info = MAPEAMENTO_GRAFICOS[grafico_simples]
+        
+        # Verificar se o gráfico foi mapeado com sucesso
+        if info.get("status") == "encontrado" and info.get("caminho_completo"):
+            grafico_original = info.get("grafico_original", "")
+            caminho = info["caminho_completo"]
+            
+            # Converter caminho relativo para absoluto se necessário
+            if not os.path.isabs(caminho):
+                caminho = os.path.join(SCRIPT_DIR, caminho)
+            
+            if os.path.exists(caminho):
+                print(f"   📊 {grafico_simples} → {grafico_original} → {os.path.basename(caminho)}")
+                return caminho
+            else:
+                print(f"   ⚠️  Arquivo mapeado não encontrado: {caminho}")
+        else:
+            # Gráfico não encontrado ou número inválido
+            status = info.get("status", "desconhecido")
+            grafico_original = info.get("grafico_original", "N/A")
+            
+            if status == "numero_invalido":
+                print(f"   ⚠️  {grafico_simples}: Número inválido no dicionário ('{grafico_original}')")
+            else:
+                print(f"   ⚠️  {grafico_simples} → {grafico_original}: Status '{status}'")
+    else:
+        print(f"   ⚠️  {grafico_simples}: Não encontrado no mapeamento")
+    
+    return None
+
+def aplicar_recuo_paragrafo(paragrafo, recuo_cm):
+    """
+    Aplica recuo horizontal (indentação) a um parágrafo usando XML.
+    
+    Args:
+        paragrafo: Objeto parágrafo do python-docx
+        recuo_cm (float): Recuo em centímetros (pode ser negativo)
+    
+    Exemplo:
+        aplicar_recuo_paragrafo(p, -1.15)  # Recuo de -1.15cm (para esquerda)
+        aplicar_recuo_paragrafo(p, 0.5)     # Recuo de 0.5cm (para direita)
+    """
+    pPr = paragrafo._element.get_or_add_pPr()
+    
+    # Criar elemento de indentação
+    ind = pPr.find(qn('w:ind'))
+    if ind is None:
+        ind = OxmlElement('w:ind')
+        pPr.append(ind)
+    
+    # Aplicar recuo à esquerda (left indent)
+    recuo_twips = int(Cm(recuo_cm).twips)
+    ind.set(qn('w:left'), str(recuo_twips))
+
+# --- 4. DADOS BRUTOS (HARDCODED) ---
 pass
 
 # --- 4. FUNÇÕES AUXILIARES (PAGINAÇÃO, ALINHAMENTO, XML) ---
@@ -34,12 +132,22 @@ def configurar_margens(documento, superior_cm, esquerda_cm, direita_cm, inferior
     # Assume que estamos trabalhando na primeira seção do documento
     section = documento.sections[0]
     
+    # Configurar tamanho do papel A4
+    section.page_width = Cm(21.0)   # Largura A4
+    section.page_height = Cm(29.7)  # Altura A4
+    
     section.top_margin = Cm(superior_cm)
     section.left_margin = Cm(esquerda_cm)
     section.right_margin = Cm(direita_cm)
     section.bottom_margin = Cm(inferior_cm)
     
+    # Configurar distâncias do cabeçalho e rodapé
+    section.header_distance = Cm(1.0)   # Da borda: 1 cm
+    section.footer_distance = Cm(1.25)  # Da borda: 1,25 cm
+    
+    print(f"Tamanho do papel: A4 (21,0 x 29,7 cm)")
     print(f"Margens definidas: Superior={superior_cm}cm, Esquerda={esquerda_cm}cm.")
+    print(f"Cabeçalho: 1.0cm da borda, Rodapé: 1.25cm da borda")
 
 
 def set_row_height_at_least(row, height_twips):
@@ -244,9 +352,13 @@ def extrair_sumario_para_json(caminho_arquivo_docx, pattern_regex):
         if match:
             prefixo_completo = match.group(1).strip()
             texto_titulo = match.group(2).strip()
-            level = len(prefixo_completo.split('.'))
             
-            texto_final_com_numero = f"{prefixo_completo} {texto_titulo}"
+            # Remover ponto final antes de calcular o level
+            prefixo_sem_ponto_final = prefixo_completo.rstrip('.')
+            level = len(prefixo_sem_ponto_final.split('.'))
+            
+            # Usar o prefixo normalizado (sem ponto final) na chave
+            texto_final_com_numero = f"{prefixo_sem_ponto_final} {texto_titulo}"
 
             if level >= 1:
                 estrutura_do_relatorio.append({
@@ -348,7 +460,10 @@ def extrair_conteudo_mapeado(caminho_arquivo_docx, pattern_titulo, pattern_legen
                     })
                 continue
             
-            chave_titulo_atual = f"{prefixo} {titulo}" 
+            # Normalizar o prefixo: remover ponto final para evitar incompatibilidade
+            # "1." vira "1", "3.10" permanece "3.10"
+            prefixo_normalizado = prefixo.rstrip('.')
+            chave_titulo_atual = f"{prefixo_normalizado} {titulo}" 
             conteudo_mapeado[chave_titulo_atual] = []
             
         elif chave_titulo_atual:
@@ -485,7 +600,10 @@ def customizar_estilos_titulo(documento):
     font_h1.all_caps = True 
     font_h1.bold = True
     p_format_h1 = style_h1.paragraph_format
-    p_format_h1.space_after = Pt(12)
+    p_format_h1.line_spacing = 1.15
+    p_format_h1.left_indent = Cm(0)  # Sem recuo no estilo (aplicaremos individualmente)
+    p_format_h1.space_before = Pt(0)
+    p_format_h1.space_after = Pt(8)
     
     style_h2 = documento.styles['Heading 2']
     font_h2 = style_h2.font
@@ -495,7 +613,9 @@ def customizar_estilos_titulo(documento):
     font_h2.bold = True
     font_h2.all_caps = False
     p_format_h2 = style_h2.paragraph_format
-    p_format_h2.space_after = Pt(10)
+    p_format_h2.line_spacing = 1.15
+    p_format_h2.space_before = Pt(36)
+    p_format_h2.space_after = Pt(8)
     
     style_h3 = documento.styles['Heading 3']
     font_h3 = style_h3.font
@@ -504,6 +624,8 @@ def customizar_estilos_titulo(documento):
     font_h3.color.rgb = RGBColor(162, 22, 18) 
     font_h3.bold = True
     p_format_h3 = style_h3.paragraph_format
+    p_format_h3.line_spacing = 1.15
+    p_format_h3.space_before = Pt(0)
     p_format_h3.space_after = Pt(8)
 
     style_normal = documento.styles['Normal']
@@ -529,10 +651,21 @@ def adicionar_tabela_atos(document, dados):
     
     table = document.add_table(rows=1, cols=len(dados[0]))
     table.style = 'Table Grid'
-    table.alignment = WD_TABLE_ALIGNMENT.LEFT
-    table.indent = Cm(1)
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER  # Alinhamento centralizado
     
-    col_widths = [Cm(5), Cm(16)]
+    # Definir largura preferencial da tabela (17,5 cm = 9922 twips)
+    tbl = table._tbl
+    tblPr = tbl.tblPr
+    if tblPr is None:
+        tblPr = OxmlElement('w:tblPr')
+        tbl.insert(0, tblPr)
+    tblW = OxmlElement('w:tblW')
+    tblW.set(qn('w:w'), '9922')  # 17,5 cm em twips
+    tblW.set(qn('w:type'), 'dxa')
+    tblPr.append(tblW)
+    
+    # Definir larguras específicas das colunas
+    col_widths = [Cm(4.76), Cm(12.74)]
     for i, width in enumerate(col_widths):
         table.columns[i].width = width
 
@@ -1571,7 +1704,7 @@ def adicionar_tabela_orcamento_conjunto(document, dados):
 def adicionar_tabela_cidades(document, dados):
     """
     Cria a Tabela de Cidades (4 colunas) com linhas zebradas, sem título/legenda,
-    e altura mínima de 0.6 cm.
+    e altura de 1,03 cm.
     """
     # --- VARIÁVEIS DE COR E ESTILO ---
     COR_LINHA_ZEBRADA_HEX = 'D9D9D9'  # Cinza Claro
@@ -1580,15 +1713,28 @@ def adicionar_tabela_cidades(document, dados):
     FONTE = 'Calibri'
     NUM_COLUNAS = 4 
     
-    # Altura MÍNIMA OBRIGATÓRIA (0.6 cm = 340 Twips)
-    ALTURA_MINIMA_OBRIGATORIA_TWIPS = 340 
+    # Altura das células: 1,03 cm = 584 Twips
+    ALTURA_CELULA_TWIPS = 584
 
     # --- ESTRUTURA E LARGURA ---
     table = document.add_table(rows=0, cols=NUM_COLUNAS)
     table.style = 'Table Grid' 
 
+    # Aplicar recuo de 1,27 cm para alinhar com o marcador anterior
+    tbl = table._tbl
+    tblPr = tbl.tblPr
+    if tblPr is None:
+        tblPr = OxmlElement('w:tblPr')
+        tbl.insert(0, tblPr)
+    
+    # Adicionar recuo à esquerda (tblInd)
+    tblInd = OxmlElement('w:tblInd')
+    tblInd.set(qn('w:w'), str(int(Cm(1.27).twips)))  # Recuo de 1,27 cm
+    tblInd.set(qn('w:type'), 'dxa')
+    tblPr.append(tblInd)
+
     # Define largura igual para as 4 colunas
-    largura_coluna = Cm(16.0 / NUM_COLUNAS) 
+    largura_coluna = Cm(14.0 / NUM_COLUNAS) 
     for col in table.columns:
         col.width = largura_coluna
     
@@ -1601,8 +1747,8 @@ def adicionar_tabela_cidades(document, dados):
         
         row = table.add_row()
         
-        # Aplica altura mínima obrigatória (0.6 cm) a todas as linhas
-        set_row_height_at_least(row, ALTURA_MINIMA_OBRIGATORIA_TWIPS) 
+        # Aplica altura de 1,03 cm a todas as linhas
+        set_row_height_flexible(row, ALTURA_CELULA_TWIPS) 
 
         if tipo == "DATA_ROW":
             data_row_index += 1
@@ -1634,6 +1780,10 @@ def adicionar_tabela_cidades(document, dados):
                 shading_elm = OxmlElement('w:shd')
                 shading_elm.set(qn('w:fill'), COR_LINHA_ZEBRADA_HEX)
                 cell._tc.get_or_add_tcPr().append(shading_elm)
+    
+    # Adiciona espaçamento após a tabela
+    p_espaco = document.add_paragraph()
+    p_espaco.paragraph_format.space_after = Pt(12)
 
 
 def adicionar_tabela_justica_numeros(document, dados):
@@ -1927,7 +2077,7 @@ if __name__ == "__main__":
     # --- FIM DA CAPA ---
 
     # --- INÍCIO DA SEÇÃO: SUMÁRIO (Simplificado) ---
-    document.add_heading('Sumário', level=1) 
+    document.add_heading('Sumário', level=1)
     print("Criando sumário estático...")
 
     for elemento in estrutura_final:
@@ -1965,6 +2115,7 @@ if __name__ == "__main__":
             level = elemento['level']
             
             print(f"\nBuscando conteúdo para: '{texto_chave}'")
+            print(f"  DEBUG: Level detectado = {level}, Type = {type(level)}")
             if texto_chave in conteudo_mapeado:
                 print(f"  ✓ ENCONTRADO: {len(conteudo_mapeado[texto_chave])} blocos")
             else:
@@ -1977,8 +2128,21 @@ if __name__ == "__main__":
                 
             # document.add_heading(texto_para_imprimir, level=level)
             p = document.add_heading(texto_para_imprimir, level=level)
-            p_format = p.paragraph_format
-            p_format.space_after = Pt(20)
+            # Aplicar recuo de 1,25 cm para Heading 1 (títulos numerados)
+            if level == 1:
+                print(f"  DEBUG: Aplicando recuo ao título: '{texto_para_imprimir}'")
+                # Usar XML para garantir que o recuo seja aplicado
+                pPr = p._element.get_or_add_pPr()
+                # Remover qualquer w:ind existente
+                existing_ind = pPr.find(qn('w:ind'))
+                if existing_ind is not None:
+                    print(f"  DEBUG: Removendo w:ind existente com left={existing_ind.get(qn('w:left'))}")
+                    pPr.remove(existing_ind)
+                # Adicionar novo w:ind
+                ind = OxmlElement('w:ind')
+                ind.set(qn('w:left'), '720')  # 720 twips = 1.27 cm
+                pPr.append(ind)
+                print(f"  → Recuo aplicado via XML: 720 twips (1.27 cm)")
 
             titulo_chave = elemento['texto'] 
             
@@ -1993,6 +2157,7 @@ if __name__ == "__main__":
                         p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                         p_format = p.paragraph_format
                         p_format.line_spacing = 1.5
+                        p_format.space_before = Pt(0)
                         p_format.space_after = Pt(8)
                     
                     # >>> NOVO PROCESSADOR DE TEXTO COM DESTAQUE <<<
@@ -2022,6 +2187,8 @@ if __name__ == "__main__":
                             p_format = p.paragraph_format
                             p_format.line_spacing = 1.0
                             p_format.space_after = Pt(4)
+                            # Adiciona recuo de parágrafo
+                            p_format.left_indent = Cm(1.27)  # Recuo de 1,27 cm
                         # Adiciona espaço após a lista
                         document.paragraphs[-1].paragraph_format.space_after = Pt(12)
                     
@@ -2034,6 +2201,8 @@ if __name__ == "__main__":
                             p_format = p.paragraph_format
                             p_format.line_spacing = 1.5
                             p_format.space_after = Pt(4)
+                            # Adiciona recuo de parágrafo
+                            p_format.left_indent = Cm(1.27)  # Recuo de 1,27 cm
                         # Adiciona espaço após a lista
                         document.paragraphs[-1].paragraph_format.space_after = Pt(12)
                     
@@ -2056,42 +2225,66 @@ if __name__ == "__main__":
                         
                         # Se for gráfico, adicionar título acima
                         if eh_grafico:
+                            # Extrair apenas o texto após "Gráfico X -"
+                            # Ex: "Gráfico 11 - Percentual de Magistrados..." → "Percentual de Magistrados..."
+                            match_titulo = re.match(r'^Gráfico\s+\d+\s*[-–]\s*(.+)', legenda_chave, re.IGNORECASE)
+                            if match_titulo:
+                                titulo_texto = match_titulo.group(1).strip()
+                            else:
+                                titulo_texto = legenda_chave  # Fallback se não encontrar o padrão
+                            
                             p_titulo = document.add_paragraph()
-                            run_titulo = p_titulo.add_run(legenda_chave)
+                            run_titulo = p_titulo.add_run(titulo_texto)
                             run_titulo.font.name = 'Calibri'
-                            run_titulo.font.size = Pt(11)
+                            run_titulo.font.size = Pt(18)
                             run_titulo.bold = True
-                            p_titulo.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                            p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
                             p_titulo.paragraph_format.space_before = Pt(12)
                             p_titulo.paragraph_format.space_after = Pt(6)
                         
-                        if legenda_chave in MAPA_IMAGENS:
-                            # Suporta dois formatos: string simples ou dicionário com configurações
+                        # Busca de imagem: 1º no mapeamento automático, 2º no MAPA_IMAGENS manual
+                        caminho_imagem_abs = None
+                        largura_cm = 16.5  # Largura padrão
+                        recuo_cm = 0.0     # Recuo padrão (sem recuo)
+                        
+                        # Prioridade 1: Buscar no mapeamento automático (gerado por match_graficos.py)
+                        caminho_imagem_abs = buscar_caminho_grafico(legenda_chave)
+                        
+                        # Prioridade 2: Buscar no MAPA_IMAGENS manual (report_data.py)
+                        if not caminho_imagem_abs and legenda_chave in MAPA_IMAGENS:
                             imagem_info = MAPA_IMAGENS[legenda_chave]
                             
                             if isinstance(imagem_info, dict):
                                 caminho_imagem_relativo = imagem_info.get("caminho")
-                                largura_cm = imagem_info.get("width", 16.5)  # Padrão: 16.5 cm
+                                largura_cm = imagem_info.get("width", 16.5)
+                                recuo_cm = imagem_info.get("indent", 0.0)  # Novo: suporte a recuo
                             else:
-                                # Formato antigo (string simples)
                                 caminho_imagem_relativo = imagem_info
-                                largura_cm = 16.5  # Padrão: 16.5 cm
+                                largura_cm = 16.5
+                                recuo_cm = 0.0
                             
                             caminho_imagem_abs = os.path.join(SCRIPT_DIR, caminho_imagem_relativo)
-                            
+                        
+                        # Inserir imagem se encontrada
+                        if caminho_imagem_abs and os.path.exists(caminho_imagem_abs):
                             try:
                                 document.add_picture(caminho_imagem_abs, width=Cm(largura_cm)) 
-                                document.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                                p_imagem = document.paragraphs[-1]
+                                p_imagem.alignment = WD_ALIGN_PARAGRAPH.CENTER
                                 
-                            except FileNotFoundError:
-                                print(f"!!! AVISO: Imagem não encontrada em: {caminho_imagem_abs}")
-                                document.add_paragraph(f"[ERRO: IMAGEM NÃO ENCONTRADA: {caminho_imagem_relativo}]")
+                                # Aplicar recuo personalizado se definido
+                                if recuo_cm != 0.0:
+                                    aplicar_recuo_paragrafo(p_imagem, recuo_cm)
+                                    print(f"   ✅ Imagem inserida com recuo de {recuo_cm}cm: {os.path.basename(caminho_imagem_abs)}")
+                                else:
+                                    print(f"   ✅ Imagem inserida: {os.path.basename(caminho_imagem_abs)}")
+                                
                             except Exception as e:
-                                print(f"!!! ERRO ao inserir imagem: {e}")
-
+                                print(f"   ❌ ERRO ao inserir imagem: {e}")
+                                document.add_paragraph(f"[ERRO AO INSERIR IMAGEM: {legenda_chave}]")
                         else:
-                            print(f"!!! AVISO: Legenda '{legenda_chave}' não encontrada no MAPA_IMAGENS.")
-                            document.add_paragraph(f"[ERRO: MAPEAMENTO DE IMAGEM AUSENTE PARA: {legenda_chave}]")
+                            print(f"   ⚠️  AVISO: Imagem não encontrada para '{legenda_chave}'")
+                            document.add_paragraph(f"[IMAGEM NÃO ENCONTRADA: {legenda_chave}]")
 
                         # Para figuras, adicionar legenda abaixo
                         # Para gráficos, não adicionar legenda (já tem título acima)
@@ -2111,7 +2304,7 @@ if __name__ == "__main__":
                             run_fonte.font.name = 'Calibri'
                             run_fonte.font.size = Pt(8) 
                             p_fonte.alignment = WD_ALIGN_PARAGRAPH.LEFT
-                            p_fonte.paragraph_format.space_after = Pt(30)
+                            p_fonte.paragraph_format.space_after = Pt(24)
 
                     elif bloco['tipo'] == 'TABELA_ATOS':
                         print(f"--- Inserindo Tabela 01 (Atos) para {titulo_chave} ---")
