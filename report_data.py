@@ -417,7 +417,7 @@ MAPA_IMAGENS = {
     # Valor: Pode ser uma string "caminho/relativo/do_arquivo.png" (usa largura padrão 16.5 cm)
     #        ou um dicionário {"caminho": "path", "width": 14.0} (largura personalizada em cm)
     
-    "Figura 01 - Informações sobre o Estado de Minas Gerais.": {"caminho": "canvas_images/figura_01.png", "width": 19.3, "indent": -1.5},
+    "Figura 01 - Informações sobre o Estado de Minas Gerais.": {"caminho": "canvas_images/figura_01.png", "width": 19.3, "indent": -1.55},
     "Figura 02 - Síntese da estrutura na área fim.": {"caminho": "canvas_images/figura_02.png", "width": 15.26},
     "Figura 03 - Novas estruturas na área fim.": {"caminho": "canvas_images/figura_03.png", "width": 16.2},
     "Figura 04 - Força de Trabalho.": {"caminho": "canvas_images/figura_04.png", "width": 15.98},

@@ -614,7 +614,7 @@ def customizar_estilos_titulo(documento):
     font_h2.all_caps = False
     p_format_h2 = style_h2.paragraph_format
     p_format_h2.line_spacing = 1.15
-    p_format_h2.space_before = Pt(36)
+    p_format_h2.space_before = Pt(30)
     p_format_h2.space_after = Pt(8)
     
     style_h3 = documento.styles['Heading 3']
@@ -646,8 +646,9 @@ def adicionar_tabela_atos(document, dados):
     TAMANHO_FONTE_PADRAO = Pt(12) 
     FONTE = 'Calibri'
     
-    # Altura mínima obrigatória de 0.6 cm = 340 twips
-    ALTURA_MINIMA_TWIPS = 340
+    # Alturas mínimas
+    ALTURA_HEADER_TWIPS = 397  # Altura mínima do cabeçalho
+    ALTURA_DADOS_TWIPS = 227   # Altura mínima das linhas de dados (era 227, agora 272)
     
     table = document.add_table(rows=1, cols=len(dados[0]))
     table.style = 'Table Grid'
@@ -664,10 +665,8 @@ def adicionar_tabela_atos(document, dados):
     tblW.set(qn('w:type'), 'dxa')
     tblPr.append(tblW)
     
-    # Definir larguras específicas das colunas
-    col_widths = [Cm(4.76), Cm(12.74)]
-    for i, width in enumerate(col_widths):
-        table.columns[i].width = width
+    # Definir larguras das colunas (será aplicado em cada célula)
+    col_widths_twips = [2700, 7222]  # 4.76cm = 2700 twips, 12.74cm = 7222 twips
 
     for i, row_data in enumerate(dados):
         if i > 0:
@@ -675,8 +674,23 @@ def adicionar_tabela_atos(document, dados):
         else:
             row = table.rows[0]
         
-        # Define altura mínima para todas as linhas (Tabela 01 - sem obrigatoriedade)
-        set_row_height_flexible(row, ALTURA_MINIMA_TWIPS)
+        # Define altura mínima diferente para cabeçalho e dados
+        # Usa 'atLeast' para permitir expansão quando o texto precisar
+        tr = row._tr
+        trPr = tr.get_or_add_trPr()
+        
+        # Remover qualquer altura existente
+        for existing_trHeight in trPr.findall(qn('w:trHeight')):
+            trPr.remove(existing_trHeight)
+        
+        # Aplicar altura mínima (permite expansão automática)
+        trHeight = OxmlElement('w:trHeight')
+        if i == 0:
+            trHeight.set(qn('w:val'), str(ALTURA_HEADER_TWIPS))
+        else:
+            trHeight.set(qn('w:val'), str(ALTURA_DADOS_TWIPS))
+        trHeight.set(qn('w:hRule'), 'atLeast')  # No mínimo, permite expansão
+        trPr.append(trHeight)
             
         tr = row._tr 
         trPr = tr.get_or_add_trPr() 
@@ -691,6 +705,13 @@ def adicionar_tabela_atos(document, dados):
             
         for j, cell_data in enumerate(row_data):
             cell = row.cells[j]
+            
+            # Aplicar largura da célula via XML
+            tcW = OxmlElement('w:tcW')
+            tcW.set(qn('w:w'), str(col_widths_twips[j]))
+            tcW.set(qn('w:type'), 'dxa')
+            cell._element.get_or_add_tcPr().append(tcW)
+            
             set_cell_vertical_alignment(cell, 'center') 
             cell.text = "" 
             
@@ -703,6 +724,13 @@ def adicionar_tabela_atos(document, dados):
                     continue 
 
                 is_list_item = line.startswith('ü')
+                
+                # Verificar se a próxima linha é uma lista
+                next_is_list = False
+                for next_line in lines[k+1:]:
+                    if next_line.strip():
+                        next_is_list = next_line.strip().startswith('ü')
+                        break
                 
                 if is_first_content_line:
                     current_paragraph = cell.paragraphs[0]
@@ -721,8 +749,8 @@ def adicionar_tabela_atos(document, dados):
                 elif i == 0:
                     current_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 else:
-                    current_paragraph.alignment = WD_ALIGN_PARAGRAPH.LEFT 
-                    current_paragraph.paragraph_format.space_after = Pt(8) 
+                    current_paragraph.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                    current_paragraph.paragraph_format.space_after = Pt(0)
                     current_paragraph.paragraph_format.line_spacing = 1
                 
                 run.font.name = FONTE
@@ -1154,7 +1182,7 @@ def adicionar_tabela_comarcas(document, dados):
     p_titulo_tabela.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p_titulo_tabela.paragraph_format.space_before = Pt(6)
     
-    run_titulo = p_titulo_tabela.add_run("Tabela 04 - Comarcas Instaladas. Fonte: Portal TJMG")
+    run_titulo = p_titulo_tabela.add_run("Tabela 04 - Estrutura para a prestação jurisdicional na Primeira Instância. Listagem das Comarcas Instaladas em Minas Gerais. Fonte Infoguia.")
     
     run_titulo.bold = False 
     run_titulo.font.name = FONTE
@@ -2140,7 +2168,7 @@ if __name__ == "__main__":
                     pPr.remove(existing_ind)
                 # Adicionar novo w:ind
                 ind = OxmlElement('w:ind')
-                ind.set(qn('w:left'), '720')  # 720 twips = 1.27 cm
+                ind.set(qn('w:left'), '708')  # 720 twips = 1.27 cm
                 pPr.append(ind)
                 print(f"  → Recuo aplicado via XML: 720 twips (1.27 cm)")
 
@@ -2290,15 +2318,26 @@ if __name__ == "__main__":
                         # Para gráficos, não adicionar legenda (já tem título acima)
                         if not eh_grafico:
                             p_legenda = document.add_paragraph()
+                            
+                            # Adicionar descrição da figura
                             run_legenda = p_legenda.add_run(legenda_chave)
                             run_legenda.font.name = 'Calibri'
                             run_legenda.font.size = Pt(8) 
-                            run_legenda.bold = False 
+                            run_legenda.bold = False
+                            
+                            # Se tiver fonte, adicionar na mesma linha
+                            if texto_fonte:
+                                run_fonte = p_legenda.add_run(f" {texto_fonte}")
+                                run_fonte.font.name = 'Calibri'
+                                run_fonte.font.size = Pt(8)
+                                run_fonte.bold = False
+                            
                             p_legenda.alignment = WD_ALIGN_PARAGRAPH.LEFT 
                             p_legenda.paragraph_format.space_before = Pt(6) 
-                            p_legenda.paragraph_format.space_after = Pt(0)
-
-                        if texto_fonte:
+                            p_legenda.paragraph_format.space_after = Pt(24)
+                        
+                        elif texto_fonte:
+                            # Para gráficos, adicionar apenas a fonte (se houver)
                             p_fonte = document.add_paragraph()
                             run_fonte = p_fonte.add_run(texto_fonte)
                             run_fonte.font.name = 'Calibri'
