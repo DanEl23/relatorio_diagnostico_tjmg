@@ -233,13 +233,13 @@ dados_tabela_nucleos = [
 
 dados_tabela_processos = [
     # Tipo, Col 1, Col 2, Col 3, Col 4, Col 5, Col 6, Col 7
-    ("HEADER_MERGE", "PROCESSOS DISTRIBUÍDOS", "", "", "", "", "", ""),
-    ("SUB_HEADER", "Instância", "2020", "2021", "2022", "2023", "2024", "Média"),
-    ("DATA_ROW", "Justiça Comum", "1.191.628", "1.365.924", "1.565.819", "1.710.153", "1.675.686", "1.501.842"),
-    ("DATA_ROW", "Juizado Especial", "534.375", "536.797", "558.504", "622.683", "661.356", "582.743"),
-    ("DATA_ROW", "Turma Recursal", "56.088", "84.268", "84.215", "93.299", "103.728", "84.320"),
-    ("DATA_ROW", "2º Grau", "199.457", "222.614", "227.760", "271.256", "334.528", "251.123"),
-    ("TOTAL_ROW", "Total", "1.981.548", "2.209.603", "2.436.298", "2.697.391", "2.775.298", "2.420.028")
+        # Gerado automaticamente a partir da planilha Informações TJMG_CEINFO.xlsx
+        ('HEADER_MERGE', 'PROCESSOS DISTRIBUÍDOS', '', '', '', '', '', '', ''),
+        ('SUB_HEADER', 'Instância', '2020.0', '2021.0', '2022.0', '2023.0', '2024.0', '2025.0', 'Média'),
+        ('DATA_ROW', 'Justiça Comum', '1191628.0', '1365924.0', '1565819.0', '1710153.0', '1675686.0', '', '1501842'),
+        ('DATA_ROW', 'Juizado Especial', '534375.0', '536797.0', '558504.0', '622683.0', '661356.0', '', '582743'),
+        ('DATA_ROW', 'Turma Recursal', '56088.0', '84268.0', '84215.0', '93299.0', '103728.0', '', '84319.6'),
+        ('DATA_ROW', '2º Grau', '199457.0', '222614.0', '227760.0', '271256.0', '334528.0', '', '251123'),
 ]
 
 dados_tabela_julgamentos = [

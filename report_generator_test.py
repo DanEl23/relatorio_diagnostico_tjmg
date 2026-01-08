@@ -5,8 +5,50 @@ from docx import Document
 from docx.shared import Pt, RGBColor, Inches, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
 from docx.enum.table import WD_TABLE_ALIGNMENT 
+
 from docx.oxml.shared import OxmlElement
 from docx.oxml.ns import qn
+
+# --- FUNÇÕES PARA BOOKMARK E PAGEREF ---
+def adicionar_bookmark(paragraph, bookmark_name):
+    """
+    Adiciona um bookmark XML no início do parágrafo.
+    """
+    # Garante nome válido
+    bookmark_name = str(bookmark_name)
+    # Gera um ID numérico único (hash simples)
+    bookmark_id = abs(hash(bookmark_name)) % (10**7)
+    # Cria elementos XML
+    tag_start = OxmlElement('w:bookmarkStart')
+    tag_start.set(qn('w:id'), str(bookmark_id))
+    tag_start.set(qn('w:name'), bookmark_name)
+    tag_end = OxmlElement('w:bookmarkEnd')
+    tag_end.set(qn('w:id'), str(bookmark_id))
+    # Insere no início do parágrafo
+    paragraph._p.insert(0, tag_start)
+    paragraph._p.append(tag_end)
+
+def adicionar_pageref(paragraph, bookmark_name):
+    """
+    Adiciona um campo PAGEREF (referência de página) ao parágrafo.
+    """
+    run = paragraph.add_run()
+    fldChar1 = OxmlElement('w:fldChar')
+    fldChar1.set(qn('w:fldCharType'), 'begin')
+    instrText = OxmlElement('w:instrText')
+    instrText.text = f' PAGEREF {bookmark_name} \\h '
+    fldChar2 = OxmlElement('w:fldChar')
+    fldChar2.set(qn('w:fldCharType'), 'separate')
+    fldChar3 = OxmlElement('w:fldChar')
+    fldChar3.set(qn('w:fldCharType'), 'end')
+    run._r.append(fldChar1)
+    run._r.append(instrText)
+    run._r.append(fldChar2)
+    run._r.append(fldChar3)
+
+# --- Função utilitária para gerar nomes únicos de bookmark ---
+def gerar_nome_bookmark(tipo, idx):
+    return f"{tipo}_{idx}"
 
 # --- 1. IMPORTAÇÃO DOS DADOS EXTERNOS ---
 try:
@@ -2105,29 +2147,43 @@ if __name__ == "__main__":
     # --- FIM DA CAPA ---
 
     # --- INÍCIO DA SEÇÃO: SUMÁRIO (Simplificado) ---
-    document.add_heading('Sumário', level=1)
-    print("Criando sumário estático...")
 
-    for elemento in estrutura_final:
+    document.add_heading('Sumário', level=1)
+    print("Criando sumário dinâmico com bookmarks e PAGEREF...")
+
+    bookmark_map = {}  # texto_chave -> bookmark_name
+    bookmark_usados = set()
+    for idx, elemento in enumerate(estrutura_final):
         if elemento['tipo'] == 'TITULO':
             level = elemento['level']
             texto = elemento['texto']
-            
+            tipo = 'item'
+            # Gera nome único e curto
+            base = re.sub(r'[^a-zA-Z0-9_]', '_', texto.split()[0].lower())
+            bookmark_name = f'{base}_{idx}'
+            # Garante unicidade
+            while bookmark_name in bookmark_usados:
+                idx += 1
+                bookmark_name = f'{base}_{idx}'
+            bookmark_usados.add(bookmark_name)
+            bookmark_map[texto] = bookmark_name
+
             p = document.add_paragraph(style='Normal')
             run = p.add_run(texto)
             run.bold = True
             run.font.name = 'Calibri'
-            
             p_format = p.paragraph_format
-            p_format.line_spacing = 1.25 
-            p_format.space_after = Pt(8) 
-            
+            p_format.line_spacing = 1.25
+            p_format.space_after = Pt(8)
             if level == 2:
                 p_format.left_indent = Inches(0.2)
             elif level == 3:
                 p_format.left_indent = Inches(0.4)
             else:
-                p_format.left_indent = Inches(0) 
+                p_format.left_indent = Inches(0)
+            # Adiciona campo PAGEREF ao lado
+            p.add_run(' ... ')
+            adicionar_pageref(p, bookmark_name)
 
     document.add_page_break()
     # --- FIM DO SUMÁRIO ---
@@ -2136,46 +2192,40 @@ if __name__ == "__main__":
     print("Gerando corpo do relatório com títulos e conteúdo...")
     print("=== DEBUG: Verificando correspondência de chaves ===")
 
-    for elemento in estrutura_final:
+    for idx, elemento in enumerate(estrutura_final):
         if elemento['tipo'] == 'TITULO':
-            
-            texto_chave = elemento['texto'] 
+            texto_chave = elemento['texto']
             level = elemento['level']
-            
             print(f"\nBuscando conteúdo para: '{texto_chave}'")
             print(f"  DEBUG: Level detectado = {level}, Type = {type(level)}")
             if texto_chave in conteudo_mapeado:
                 print(f"  ✓ ENCONTRADO: {len(conteudo_mapeado[texto_chave])} blocos")
             else:
                 print(f"  ✗ NÃO ENCONTRADO no conteudo_mapeado")
-            
             if level == 1:
                 texto_para_imprimir = texto_chave.replace(" ", ". ", 1)
             else:
                 texto_para_imprimir = texto_chave
-                
-            # document.add_heading(texto_para_imprimir, level=level)
             p = document.add_heading(texto_para_imprimir, level=level)
+            # Adiciona bookmark único no início do título
+            bookmark_name = bookmark_map.get(texto_chave)
+            if bookmark_name:
+                adicionar_bookmark(p, bookmark_name)
             # Aplicar recuo de 1,25 cm para Heading 1 (títulos numerados)
             if level == 1:
                 print(f"  DEBUG: Aplicando recuo ao título: '{texto_para_imprimir}'")
-                # Usar XML para garantir que o recuo seja aplicado
                 pPr = p._element.get_or_add_pPr()
-                # Remover qualquer w:ind existente
                 existing_ind = pPr.find(qn('w:ind'))
                 if existing_ind is not None:
                     print(f"  DEBUG: Removendo w:ind existente com left={existing_ind.get(qn('w:left'))}")
                     pPr.remove(existing_ind)
-                # Adicionar novo w:ind
                 ind = OxmlElement('w:ind')
-                ind.set(qn('w:left'), '708')  # 720 twips = 1.27 cm
+                ind.set(qn('w:left'), '708')
                 pPr.append(ind)
                 print(f"  → Recuo aplicado via XML: 720 twips (1.27 cm)")
 
-            titulo_chave = elemento['texto'] 
-            
+            titulo_chave = texto_chave
             if titulo_chave in conteudo_mapeado:
-                
                 for bloco in conteudo_mapeado[titulo_chave]:
                     
                     # --- PROCESSADOR DE BLOCOS ---
@@ -2411,6 +2461,7 @@ if __name__ == "__main__":
     # --- FIM DA SEÇÃO ---
 
     # --- SALVAR O DOCUMENTO ---
+    print("\nATENÇÃO: Após abrir o documento no Word, pressione Ctrl+A e F9 para atualizar os campos do sumário e exibir os números de página corretamente.")
     try:
         document.save(CAMINHO_SAIDA)
         print(f"Documento '{CAMINHO_SAIDA}' gerado com sucesso!")
